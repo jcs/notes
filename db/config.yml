@@ -1,0 +1,19 @@
+development:
+  adapter: sqlite3
+  database: db/development.sqlite3
+  pool: 5
+  timeout: 5000
+
+test:
+  adapter: sqlite3
+  database: db/test.sqlite3
+  pool: 5
+  timeout: 5000
+
+# in db/production so that directory can be owned by the uid:gid running the
+# app in the production environment
+production:
+  adapter: sqlite3
+  database: db/production/production.sqlite3
+  pool: 5
+  timeout: 5000

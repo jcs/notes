@@ -1,0 +1,98 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    activemodel (5.2.8.1)
+      activesupport (= 5.2.8.1)
+    activerecord (5.2.8.1)
+      activemodel (= 5.2.8.1)
+      activesupport (= 5.2.8.1)
+      arel (>= 9.0)
+    activesupport (5.2.8.1)
+      concurrent-ruby (~> 1.0, >= 1.0.2)
+      i18n (>= 0.7, < 2)
+      minitest (~> 5.1)
+      tzinfo (~> 1.1)
+    arel (9.0.0)
+    bcrypt (3.1.18)
+    concurrent-ruby (1.1.10)
+    erubis (2.7.0)
+    i18n (1.11.0)
+      concurrent-ruby (~> 1.0)
+    io-console (0.5.11)
+    irb (1.4.1)
+      reline (>= 0.3.0)
+    json (2.6.2)
+    kgio (2.11.4)
+    mail (2.7.1)
+      mini_mime (>= 0.1.1)
+    mini_mime (1.1.2)
+    minitest (5.15.0)
+    multi_json (1.15.0)
+    mustermann (1.1.1)
+      ruby2_keywords (~> 0.0.1)
+    pony (1.13.1)
+      mail (>= 2.0)
+    rack (2.2.3.1)
+    rack-protection (2.2.0)
+      rack
+    rack-test (1.1.0)
+      rack (>= 1.0, < 3)
+    rack_csrf (2.6.0)
+      rack (>= 1.1.0)
+    raindrops (0.20.0)
+    rake (13.0.6)
+    reline (0.3.1)
+      io-console (~> 0.5)
+    ruby2_keywords (0.0.5)
+    shotgun (0.9.2)
+      rack (>= 1.0)
+    sinatra (2.2.0)
+      mustermann (~> 1.0)
+      rack (~> 2.2)
+      rack-protection (= 2.2.0)
+      tilt (~> 2.0)
+    sinatra-activerecord (2.0.25)
+      activerecord (>= 4.1)
+      sinatra (>= 1.0)
+    sinatra-contrib (2.2.0)
+      multi_json
+      mustermann (~> 1.0)
+      rack-protection (= 2.2.0)
+      sinatra (= 2.2.0)
+      tilt (~> 2.0)
+    sqlite3 (1.4.2)
+    thread_safe (0.3.6)
+    tilt (2.0.10)
+    tzinfo (1.2.10)
+      thread_safe (~> 0.1)
+    unicorn (6.1.0)
+      kgio (~> 2.6)
+      raindrops (~> 0.7)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  activerecord (~> 5.2)
+  bcrypt
+  erubis
+  irb
+  json
+  minitest
+  pony
+  rack
+  rack-test
+  rack_csrf
+  rake
+  shotgun
+  sinatra
+  sinatra-activerecord
+  sinatra-contrib
+  sqlite3
+  unicorn
+
+RUBY VERSION
+   ruby 2.6.6p146
+
+BUNDLED WITH
+   1.17.2
