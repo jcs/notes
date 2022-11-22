@@ -34,3 +34,8 @@ gem "irb", :require => false
 gem "rake"
 gem "minitest"
 gem "rack-test"
+
+# local
+gem "sanitize"
+gem "pledge"
+gem "gd2-ffij"

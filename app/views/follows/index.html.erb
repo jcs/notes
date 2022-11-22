@@ -1,0 +1,13 @@
+<%= partial "../home/header" %>
+
+<h2><%= h @title %></h2>
+
+<% if @page > 1 %>
+  <%= partial "../home/page_links", :locals => { :klass => "top" } %>
+<% end %>
+
+<% @items.each do |f_or_f| %>
+  <%= partial "contact", :locals => { :contact => f_or_f.contact } %>
+<% end %>
+
+<%= partial "../home/page_links" %>

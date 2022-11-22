@@ -1,0 +1,264 @@
+html, body, h1, h2, h3, h4, h5, input, textarea, header select {
+	font-family: sans-serif;
+	font-size: 11pt;
+}
+pre, code {
+	font-family: monospace;
+}
+h1, h2 {
+	font-size: 13pt;
+	font-weight: bold;
+}
+h1 code, h2 code {
+	font-size: 12pt;
+}
+
+body {
+	background-color: #fdfdf8;
+	line-height: 1.4em;
+	margin: 0 auto;
+	padding: 10px;
+	padding-top: 0;
+}
+
+footer {
+	color: #aaa;
+	font-size: 0.9em;
+	margin-bottom: 2em;
+	margin-top: 3em;
+	text-align: center;
+}
+footer a,
+footer a:visited {
+	color: gray;
+}
+
+div#sitewrapper {
+	margin: 0px auto;
+	position: relative;
+	padding: 0 5px;
+	width: 800px;
+}
+
+
+.notes_counters {
+	margin-bottom: 1em;
+}
+.notes_counters a {
+	color: #555;
+	text-decoration: none;
+}
+
+.follow_button {
+	background-color: #e6eae8;
+	border-radius: 10px;
+	border: 1px solid #cad3cf;
+	cursor: pointer;
+	float: right;
+	max-width: 50%;
+	padding: 0.35em 0.75em 0.20em 0.75em;
+}
+.follow_button summary {
+	text-align: right;
+}
+.follow_button input {
+	width: 75%;
+}
+.follow_button > summary {
+	list-style: none;
+}
+
+.follow_button > summary::marker,
+.follow_button > summary::-webkit-details-marker {
+	display: none;
+}
+
+.page_nav {
+	text-align: center;
+	margin-top: 3em;
+	color: #555;
+}
+.page_nav.top {
+	margin-top: 0;
+	margin-bottom: 1em;
+}
+.page_nav .page {
+	border: 1px solid #ddd;
+	display: inline-block;
+	padding: 5px 10px;
+	margin-left: 0.5em;
+	text-align: center;
+	border-radius: 8px;
+}
+.page_nav .page.ellipses {
+	border-color: transparent;
+}
+
+.page_nav .page.cur_page {
+	background-color: #f7f7f2;
+	font-weight: bold;
+	color: #555;
+}
+.page_nav .page.ellipses {
+	border-color: transparent;
+}
+.page_nav.top {
+	margin-top: 0;
+	margin-bottom: 1em;
+}
+
+h1.note a {
+	display: inline-block;
+	text-decoration: none;
+	vertical-align: text-top;
+	margin-right: 1em;
+	margin-top: -3px;
+}
+
+article.note {
+	border: 1px solid #e0e0e0;
+	margin-bottom: 1em;
+	padding: 1em;
+	padding-left: 80px;
+	border-radius: 20px;
+	/* cursor: pointer; */
+}
+
+article.note:hover {
+	background-color: #f5f5f5;
+}
+
+.note img.avatar {
+	float: left;
+	margin-left: -66px;
+}
+.note img.avatar.local {
+	border-radius: 100% 100%;
+}
+
+.note .date,
+.note .username {
+	color: gray;
+}
+
+.note .realname {
+	font-weight: bold;
+}
+.note .realname a,
+.note .username a {
+	color: #555;
+	text-decoration: none;
+}
+.note .realname a:hover {
+	text-decoration: underline;
+}
+
+.note .date a {
+	color: gray;
+	text-decoration: none;
+}
+.note .date a:hover {
+	text-decoration: underline;
+}
+.note .note_text {
+	margin-top: 0.3em;
+}
+
+.note .note_text p {
+	margin-bottom: 0;
+}
+
+.note .note_attachments {
+	margin-top: 1em;
+}
+.note .note_attachment {
+	display: inline;
+}
+.note .note_attachment img {
+	object-fit: cover;
+	/* for 4 or more */
+	width: 141px;
+	height: 141px;
+}
+.note .note_attachments_count_1 .note_attachment img {
+	object-fit: contain;
+	object-position: 0 0;
+	max-width: 100%;
+	max-height: 500px;
+	width: 100%;
+	height: 100%;
+}
+.note .note_attachments_count_2 .note_attachment img {
+	width: 285px;
+	height: 285px;
+}
+.note .note_attachments_count_3 .note_attachment img {
+	width: 190px;
+	height: 190px;
+}
+.note .note_attachment video {
+	margin-left: 0;
+	max-width: 100%;
+	max-height: 500px;
+	object-fit: contain;
+	width: 100%;
+}
+
+.note_thread_indicator {
+	height: 2em;
+	margin-top: -1em;
+	border-left: 4px solid lightgray;
+	margin-left: 38px;
+}
+
+.note .full_date {
+	display: none;
+}
+
+.note.dedicated .dash {
+	display: none;
+}
+.note.dedicated .date {
+	display: none;
+}
+.note.dedicated .username {
+	display: block;
+}
+.note.dedicated .note_text {
+	clear: both;
+	display: block;
+	font-size: 14pt;
+	line-height: 1.3em;
+	margin-left: -65px;
+	margin-top: 1em;
+}
+.note.dedicated .full_date {
+	display: block;
+	margin-top: 1em;
+	font-size: 0.75em;
+}
+.note.dedicated .full_date a {
+	color: gray;
+	text-decoration: none;
+}
+
+.note_contact {
+	clear: both;
+	margin-bottom: 1.5em;
+}
+.note_contact img.avatar {
+	float: left;
+	padding-right: 1em;
+}
+.note_contact .realname {
+    font-weight: bold;
+    display: block;
+}
+.note_contact .realname a,
+.note_contact .username a {
+    color: #555;
+    text-decoration: none;
+}
+.note_contact .realname a:hover {
+    text-decoration: underline;
+}

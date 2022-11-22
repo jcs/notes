@@ -175,7 +175,8 @@ class App
   include SinatraMore::TagHelpers
 end
 
-# bring in user's models and helpers
+# bring in user's mixins, models, and helpers
+Dir.glob("#{App.root}/app/mixins/*.rb").each{|f| require f }
 Dir.glob("#{App.root}/app/models/*.rb").each{|f| require f }
 
 require "#{App.root}/lib/helpers.rb"

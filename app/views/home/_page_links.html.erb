@@ -1,0 +1,19 @@
+<% if @pages > 0 %>
+  <div class="page_nav <%= defined?(klass) ? klass : "" %>">
+    Page:
+
+    <% page_numbers_for_pagination(@pages, @page).each do |page| %>
+      <% if page == @page %>
+        <a class="page cur_page">
+          <%= page %>
+        </a>
+      <% elsif page == 1 %>
+        <a href="<%= @base_url %>" class="page"><%= page %></a>
+      <% elsif !page.is_a?(Integer) %>
+        <span class="page ellipses"><%= page %></span>
+      <% else %>
+        <a href="<%= @base_url %>/pages/<%= page %>" class="page"><%= page %></a>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>

@@ -1,0 +1,11 @@
+<%= partial "../home/header" %>
+
+<% if @page > 1 %>
+  <%= partial "../home/page_links", :locals => { :klass => "top" } %>
+<% end %>
+
+<% @notes.each do |note| %>
+  <%= partial "note", :locals => { :note => note } %>
+<% end %>
+
+<%= partial "../home/page_links" %>

@@ -1,0 +1,53 @@
+class User < DBModel
+  has_many :followings
+  has_many :followers
+  has_one :contact
+  has_many :notes,
+    :through => :contact
+
+  has_secure_password
+
+  before_create :create_contact_and_keys
+
+  include UserActivityStream
+
+  def self.find_by_address(address)
+    m = address.match(/\A([^@]+)@(.+)\z/)
+    if !m
+      return nil
+    end
+
+    if m[2] != App.domain
+      return nil
+    end
+
+    User.where(:username => m[1]).first
+  end
+
+  def address
+    "#{self.username}@#{App.domain}"
+  end
+
+  def following?(actor)
+    self.followings.joins(:contact).where("contacts.actor = ?", actor).any?
+  end
+
+  def followed_by?(actor)
+    self.followers.joins(:contact).where("contacts.actor = ?", actor).any?
+  end
+
+private
+  def create_contact_and_keys
+    key = OpenSSL::PKey::RSA.new(2048)
+    self.private_key = key.to_s
+
+    c = self.build_contact
+    c.actor = App.base_url
+    c.address = self.address
+    c.key_id = self.activitystream_key_id
+    c.key_pem = key.public_key
+    c.inbox = self.activitystream_inbox_url
+    c.url = self.activitystream_url
+    c.save!
+  end
+end

@@ -1,22 +1,16 @@
-## sinatree
+## Notes
 
-A skeleton web application configured to use Sinatra and ActiveRecord with
-some simple conventions:
+A simple single-user ActivityPub server that should be somewhat compatible with
+Mastodon, developed on top of
+[sinatree](https://github.com/jcs/sinatree).
 
-- `views` directory set to `app/views/(current controller name)`
-
-- default layout configured to `app/views/layouts/application.erb`, with
-  per-controller layouts `app/views/layouts/(current controller name).erb`
-  used first
-
-- database tables using non-auto-incrementing IDs (see
-[`UniqueId`](https://github.com/jcs/sinatree/blob/master/lib/unique_id.rb))
+This is a work in progress.
 
 ### Usage
 
-Clone `sinatree`:
+Clone `notes`:
 
-	$ git clone https://github.com/jcs/sinatree.git
+	$ git clone https://github.com/jcs/notes.git
 
 Then install Bundler dependencies:
 
@@ -26,51 +20,30 @@ Initialize a session secret key:
 
 	$ ruby -e 'require "securerandom"; print SecureRandom.hex(64)' > config/session_secret
 
-To create a database table `users` for a new `User` model:
+Create a new database:
 
-	$ $EDITOR `bundle exec rake db:create_migration NAME=create_user_model`
+	$ env RACK_ENV=production bundle exec rake db:migrate
 
-	class CreateUserModel < ActiveRecord::Migration[5.2]
-	  def change
-	    create_table :users do |t|
-	      t.timestamps
-	      t.string :username
-	      t.string :password_digest
-	    end
-	  end
-	end
+Create the single user:
 
-Then run the database migrations:
+	$ env RACK_ENV=production bin/console
+	> u = User.new
+	> u.username = "me"
+	> u.password = u.password_confirmation = "OrpheanBeholderScryDoubt"
+	> u.save
+	=> true
+	> u.contact.about = "Hello!"
+	> u.contact.realname = "Fred"
+	> u.contact.avatar_attachment = Attachment.build_from_url("https://example.com/images/my-avatar.jpg")
+	> u.contact.avatar_attachment.save
+	> u.contact.save!
+	=> true
 
-	$ bundle exec rake db:migrate
-
-The new `User` model can be created as `app/models/user.rb`:
-
-	class User < DBModel
-	  has_secure_password
-	end
-
-A root controller can be created as `app/controllers/home_controller.rb`:
-
-	class HomeController < ApplicationController
-	  self.path = :root
-
-	  get "/" do
-	    "Hello, world"
-	  end
-	end
-
-To run a web server with your application:
-
-	$ bin/server
-
-To access an IRB console:
-
-	$ bin/console
+To override site settings, edit `config/app.rb`.
 
 ### License
 
-Copyright (c) 2017-2020 joshua stein `<jcs@jcs.org>`
+Copyright (c) 2022 joshua stein `<jcs@jcs.org>`
 
 Permission to use, copy, modify, and distribute this software for any
 purpose with or without fee is hereby granted, provided that the above

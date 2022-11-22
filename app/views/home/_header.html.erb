@@ -1,0 +1,33 @@
+<details class="follow_button">
+  <summary>Follow</summary>
+  To follow me in the Fediverse on your Mastodon or compatible ActivityPub
+  server, copy this address and paste it into your server's search page:
+  <p>
+  <input type="text" readonly value="@<%= h @user.address %>">
+</details>
+
+<h1><a href="<%= App.base_url %>"><%= h App.name %></a></h1>
+
+<p>
+<%= h @user.contact.about %>
+</p>
+
+<div class="notes_counters">
+  <span style="margin-right: 20px;">
+    <a href="<%= App.base_url %>">
+      <strong><%= c = @user.notes.timeline.count %></strong>
+        note<%= c == 1 ? "" : "s" %>
+    </a>
+  </span>
+  <span style="margin-right: 20px;">
+    <a href="<%= App.base_url %>/following">
+      <strong><%= @user.followings.count %></strong> following
+    </a>
+  </span>
+  <span style="margin-right: 20px;">
+    <a href="<%= App.base_url %>/followers">
+      <strong><%= c = @user.followers.count %></strong>
+        follower<%= c == 1 ? "" : "s" %>
+    </a>
+  </span>
+</div>

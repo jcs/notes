@@ -1,5 +1,6 @@
 .bundle
 config/session_secret
+config/app.local.rb
 db/production/
 db/development.sqlite3
 db/test.sqlite3

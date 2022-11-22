@@ -1,0 +1,15 @@
+<div class="note_contact">
+  <a href="<%= h contact.url_or_locate_url %>">
+    <img class="avatar" src="<%= App.base_url %>/avatars/<%= h contact.id
+      %>" width=50 height=50>
+  </a>
+
+  <span class="realname">
+    <a href="<%= h contact.url_or_locate_url %>" rel="nofollow"><%=
+      h contact.realname_or_address %></a>
+  </span>
+  <span class="username">
+    <a href="<%= h contact.url_or_locate_url %>" rel="nofollow"><%=
+      h contact.address %></a>
+  </span>
+</div>

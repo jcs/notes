@@ -1,0 +1,9 @@
+<h1 class="note">
+  <a href="<%= App.base_url %>/from/<%= h @contact.address %>"
+    class="notes_back_link">
+    <%= partial "../home/back_button" %>
+  </a>
+  Notes from <%= h @contact.address %>
+</h1>
+
+<%= partial "../notes/note", :locals => { :note => @note, :dedicated => true } %>

@@ -1,0 +1,43 @@
+<article class="note <%= defined?(dedicated) && dedicated ? "dedicated" : "" %>"
+id="<%= note.id %>">
+  <a href="<%= note.contact.url %>">
+    <img class="avatar <%= note.contact.user_id ? "local" : "" %>"
+      src="<%= App.base_url %>/avatars/<%= note.contact.address %>"
+      width=50 height=50>
+  </a>
+
+  <span class="realname">
+    <a href="<%= note.contact.url %>"><%= h note.contact.realname %></a>
+  </span>
+  <span class="username">
+    <a href="<%= note.contact.url %>">@<%= h note.contact.address %></a>
+  </span>
+  <span class="dash">
+    -
+  </span>
+  <span class="date" title="<%= note.created_at.strftime("%Y-%m-%d %H:%M:%S") %>">
+    <a href="<%= note.url %>">
+      <%= short_time_ago(note.created_at) %>
+    </a>
+  </span>
+
+  <div class="note_text">
+    <%= note.html %>
+
+    <% if (count = note.attachments.count) > 0 %>
+      <div class="note_attachments note_attachments_count_<%= count %>">
+        <% note.attachments.order("id").each do |a| %>
+          <div class="note_attachment">
+            <%= a.html %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <div class="full_date">
+      <a href="<%= note.url %>">
+        <%= note.created_at.strftime("%H:%M - %B %e, %Y") %>
+      </a>
+    </div>
+  </div>
+</article>

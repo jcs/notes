@@ -1,0 +1,16 @@
+<h1 class="note">
+  <a href="<%= App.base_url %>" class="notes_back_link">
+    <%= partial "../home/back_button" %>
+  </a>
+  Notes from <%= h @contact.address %>
+</h1>
+
+<% if @page > 1 %>
+  <%= partial "../home/page_links", :locals => { :klass => "top" } %>
+<% end %>
+
+<% @notes.each do |note| %>
+  <%= partial "../notes/note", :locals => { :note => note } %>
+<% end %>
+
+<%= partial "../home/page_links" %>

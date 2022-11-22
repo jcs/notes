@@ -1,0 +1,23 @@
+<h1 class="note">
+  <a href="<%= App.base_url %>" class="notes_back_link">
+    <%= partial "../home/back_button" %>
+  </a>
+  Note
+</h1>
+
+<% (thread = @note.thread).each_with_index do |tnote,x| %>
+  <% if x > 0 %>
+    <div class="note_thread_indicator"></div>
+  <% end %>
+  <%= partial "note", :locals => { :note => tnote,
+    :dedicated => (thread.count == 1 || (tnote.id == @note.id)) } %>
+<% end %>
+
+<% if thread.count > 0 && @note.parent_note_id.to_i > 0 %>
+  <script>
+    window.addEventListener("load", function() {
+      document.getElementById("<%= @note.id %>").scrollIntoView();
+      document.documentElement.scrollTop -= 50;
+    });
+  </script>
+<% end %>
