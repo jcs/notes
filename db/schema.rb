@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_11_27_024246) do
+ActiveRecord::Schema.define(version: 2022_11_27_225217) do
 
   create_table "attachment_blobs", force: :cascade do |t|
     t.integer "attachment_id"
@@ -65,9 +65,23 @@ ActiveRecord::Schema.define(version: 2022_11_27_024246) do
     t.index ["user_id", "contact_id"], name: "index_followings_on_user_id_and_contact_id", unique: true
   end
 
+  create_table "forwards", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "contact_id"
+    t.integer "note_id"
+    t.index ["note_id", "contact_id"], name: "index_forwards_on_note_id_and_contact_id", unique: true
+  end
+
   create_table "keystores", primary_key: "key", id: :string, force: :cascade do |t|
     t.string "value", null: false
     t.datetime "expiration"
+  end
+
+  create_table "likes", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "contact_id"
+    t.integer "note_id"
+    t.index ["note_id", "contact_id"], name: "index_likes_on_note_id_and_contact_id", unique: true
   end
 
   create_table "notes", force: :cascade do |t|

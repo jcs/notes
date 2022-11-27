@@ -17,6 +17,17 @@ class NotesController < ApplicationController
       halt 404
     else
       @notes = @user.contact.notes.timeline.limit(PER_PAGE)
+      likes = Like.where(:note_id => @notes.map{|n| n.id }).group(:note_id).
+        count
+      replies = Note.where(:parent_note_id => @notes.map{|n| n.id }).
+        group(:parent_note_id).count
+      forwards = Forward.where(:note_id => @notes.map{|n| n.id }).
+        group(:note_id).count
+      @notes.each do |n|
+        n.like_count = likes[n.id].to_i
+        n.reply_count = replies[n.id].to_i
+        n.forward_count = forwards[n.id].to_i
+      end
       @page = 1
       erb :index
     end
@@ -42,6 +53,16 @@ class NotesController < ApplicationController
       last_modified (@note.note_modified_at || @note.created_at)
       erb :show
     end
+  end
+
+  get "/:id/likes" do
+    find_note
+    erb :likes
+  end
+
+  get "/:id/forwards" do
+    find_note
+    erb :forwards
   end
 
 private

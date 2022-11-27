@@ -3,7 +3,12 @@ class Contact < DBModel
     :class_name => "Attachment",
     :foreign_key => "avatar_attachment_id"
   belongs_to :user
-  has_many :notes
+  has_many :notes,
+    :dependent => :destroy
+  has_many :likes,
+    :dependent => :destroy
+  has_many :forwards,
+    :dependent => :destroy
 
   def self.queue_refresh_for_actor!(actor)
     q = QueueEntry.new

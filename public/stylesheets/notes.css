@@ -211,6 +211,32 @@ article.note:hover {
 	margin-left: 38px;
 }
 
+.note_vanity {
+    margin-top: 1em;
+}
+.note_vanity_replies,
+.note_vanity_likes,
+.note_vanity_forwards {
+    display: table-cell;
+    width: 100px;
+}
+.note_vanity,
+.note_vanity a,
+.note_vanity svg {
+    color: #bbb;
+    fill: #bbb;
+    text-decoration: none;
+}
+.note_vanity svg {
+    display: table-cell;
+    height: 1.2em;
+    width: 1.2em;
+    padding-right: 0.2em;
+    vertical-align: top;
+}
+.note_vanity_likes svg {
+    margin-top: -1px;
+}
 .note .full_date {
 	display: none;
 }
@@ -240,6 +266,14 @@ article.note:hover {
 .note.dedicated .full_date a {
 	color: gray;
 	text-decoration: none;
+}
+
+.note.dedicated .note_vanity {
+    font-size: 11pt;
+}
+.note.dedicated .note_vanity a {
+    color: gray;
+    margin-right: 1em;
 }
 
 .note_contact {

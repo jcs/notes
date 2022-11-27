@@ -17,6 +17,13 @@ class InboxController < ApplicationController
     end
 
     case asvm.message["type"]
+    when "Announce"
+      if (note = @user.contact.notes.where(:id =>
+      Note.id_from_note_url(asvm.message["object"])).first)
+        note.forward_by!(asvm.contact)
+        App.logger.info "[c#{asvm.contact.id}] [n#{note.id}] forwarded"
+      end
+
     when "Create"
       case type
       when "Note"
@@ -52,8 +59,29 @@ class InboxController < ApplicationController
         App.logger.error "unsupported Follow for #{type}"
       end
 
+    when "Like"
+      if (note = @user.contact.notes.where(:id =>
+      Note.id_from_note_url(asvm.message["object"])).first)
+        note.like_by!(asvm.contact)
+        App.logger.info "[c#{asvm.contact.id}] [n#{note.id}] liked"
+      end
+
     when "Undo"
       case type
+      when "Announce"
+        if (note = @user.contact.notes.where(:id =>
+        Note.id_from_note_url(asvm.message["object"]["object"])).first)
+          note.unforward_by!(asvm.contact)
+          App.logger.info "[c#{asvm.contact.id}] [n#{note.id}] unforwarded"
+        end
+
+      when "Like"
+        if (note = @user.contact.notes.where(:id =>
+        Note.id_from_note_url(asvm.message["object"]["object"])).first)
+          note.unlike_by!(asvm.contact)
+          App.logger.info "[c#{asvm.contact.id}] [n#{note.id}] unliked"
+        end
+
       when "Follow"
         if (f = @user.followers.where(:contact_id => asvm.contact.id).first)
           f.destroy

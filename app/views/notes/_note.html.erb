@@ -1,5 +1,5 @@
-<article class="note <%= defined?(dedicated) && dedicated ? "dedicated" : "" %>"
-id="<%= note.id %>">
+<% dedicated = false if !(defined?(dedicated) && dedicated) %>
+<article class="note <%= dedicated ? "dedicated" : "" %>" id="<%= note.id %>">
   <a href="<%= note.contact.url %>">
     <img class="avatar <%= note.contact.user_id ? "local" : "" %>"
       src="<%= App.base_url %>/avatars/<%= note.contact.address %>"
@@ -39,5 +39,57 @@ id="<%= note.id %>">
         <%= note.created_at.strftime("%H:%M - %B %e, %Y") %>
       </a>
     </div>
+
+  <div class="note_vanity">
+    <% if dedicated %>
+      <% if note.like_count > 0 %>
+        <a href="<%= App.base_url %>/<%= note.id %>/likes">
+          <strong><%= note.like_count %></strong>
+          Like<%= note.like_count == 1 ? "" : "s" %>
+          &nbsp;
+        </a>
+      <% end %>
+      <% if note.forward_count > 0 %>
+        <a href="<%= App.base_url %>/<%= note.id %>/forwards">
+          <strong><%= note.forward_count %></strong>
+          Forward<%= note.forward_count == 1 ? "" : "s" %>
+          &nbsp;
+        </a>
+      <% end %>
+    <% else %>
+      <div class="note_vanity_replies">
+        <a href="<%= App.base_url %>/<%= note.id %>/replies"
+          title="<%= note.reply_count %> Repl<%=
+          note.reply_count == 1 ? "y" : "ies" %>">
+          <svg viewBox="0 0 560 560" xmlns="http://www.w3.org/2000/svg">
+            <path d="m392.98 68.008c-2.2969-0.21875-4.5938-0.4375-7-0.54688-33.25 0.10938-66.5 0.14453-99.75 0.10938-8.4219 0-54.906 0-107.84-0.10938-13.672 0.65625-23.625 1.4219-27.125 2.0781-100.52 17.609-168.44 116.48-151.05 217.22 16.297 94.609 92.422 159.25 188.45 159.8 25.922 0.10938 51.844-0.32812 77.766 0.32812 6.0703 0.20703 11.938 2.2266 16.844 5.7969 26.688 20.781 52.719 42.547 79.406 63.328 9.1875 7.1094 19.359 13.562 29.969 17.719 19.797 7.6562 36.641-0.98438 43.531-21.328 2.5234-7.4961 4.0312-15.293 4.4844-23.188 0.76563-14.984 0.875-30.078 0.32813-45.172-0.32813-8.0938 2.0781-12.469 9.625-16.297 73.828-37.625 112.55-107.3 106.2-189.88-6.7812-87.281-76.977-161.77-163.84-169.86z"/>
+          </svg>
+          <%= note.reply_count == 0 ? "&nbsp;" : note.reply_count %>
+        </a>
+      </div>
+
+      <div class="note_vanity_likes">
+        <a href="<%= App.base_url %>/<%= note.id %>/likes"
+          title="<%= note.like_count %> Like<%=
+          note.like_count == 1 ? "" : "s" %>">
+          <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+            <path d="m358.84 149.57 107.75 15.527c30.555 4.4023 42.797 41.934 20.719 63.504l-77.867 76.078c-8.7695 8.5664-12.758 20.898-10.672 32.977l18.531 107.27c5.2539 30.418-26.652 53.66-53.996 39.328l-96.418-50.535c-10.859-5.6914-23.824-5.6797-34.664 0.0391l-96.297 50.773c-27.305 14.398-59.27-8.7695-54.09-39.199l18.273-107.32c2.0547-12.086-1.9609-24.41-10.754-32.957l-78.035-75.887c-22.133-21.52-9.9805-59.078 20.57-63.555l107.71-15.781c12.129-1.7734 22.605-9.4062 28.016-20.406l48.062-97.68c13.629-27.699 53.105-27.746 66.797-0.07812l48.293 97.562c5.4414 10.98 15.934 18.59 28.07 20.336z"/>
+          </svg>
+          <%= note.like_count == 0 ? "&nbsp;" : note.like_count %>
+        </a>
+      </div>
+
+      <div class="note_vanity_forwards">
+        <a href="<%= App.base_url %>/<%= note.id %>/forwards"
+          title="<%= note.forward_count %> Forward<%=
+          note.forward_count == 1 ? "" : "s" %>">
+          <svg viewBox="0 0 336 336" xmlns="http://www.w3.org/2000/svg">
+            <path d="m49.207 286.8c-65.609-65.605-65.609-171.98 0-237.59 65.605-65.609 171.98-65.609 237.59 0 65.609 65.605 65.609 171.98 0 237.59-65.605 65.609-171.98 65.609-237.59 0zm186.05-172.45c0.0508-7.7227-6.1836-13.922-13.961-13.852l-92.586 0.83594c-14.922 0.0156-14.945 22.391-0.0234 22.375l62.34-0.0898c3.0703-4e-3 3.7734 1.7773 1.5938 3.957l-86.125 86.125c-4.3867 4.3828-4.4336 11.445-0.0351 15.844 4.3633 4.3633 11.449 4.3555 15.84-0.0352l86.129-86.129c2.1875-2.1875 3.9609-1.4648 3.9531 1.5938l-0.0899 62.34c-0.0195 14.922 22.359 14.902 22.375-0.0195z"/>
+          </svg>
+          <%= note.forward_count == 0 ? "&nbsp;" : note.forward_count %>
+        </a>
+      </div>
+    <% end %>
+  </div>
   </div>
 </article>

@@ -7,7 +7,8 @@
 <% end %>
 
 <% @items.each do |f_or_f| %>
-  <%= partial "contact", :locals => { :contact => f_or_f.contact } %>
+  <%= partial "../home/contact", :locals => { :contact => f_or_f.contact,
+    :show_notes_link => (f_or_f.is_a?(Following)) } %>
 <% end %>
 
 <%= partial "../home/page_links" %>

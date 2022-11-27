@@ -12,6 +12,10 @@ class Note < DBModel
     :dependent => :destroy
   has_one :user,
     :through => :contact
+  has_many :likes,
+    :dependent => :destroy
+  has_many :forwards,
+    :dependent => :destroy
 
   validates_presence_of :contact
 
@@ -24,6 +28,18 @@ class Note < DBModel
   end
   before_destroy do
     if local? then self.activitystream_publish!("Delete") end
+  end
+
+  attr_accessor :like_count, :reply_count, :forward_count
+
+  def self.id_from_note_url(url)
+    if url.starts_with?(App.base_url)
+      path = url[App.base_url.bytesize .. -1]
+      if m = path.match(/\A\/(\d+)/)
+        return m[1]
+      end
+    end
+    nil
   end
 
   def self.ingest_note!(asvm)
@@ -117,8 +133,34 @@ class Note < DBModel
     end
   end
 
+  def forward_by!(contact)
+    if !(l = self.forwards.where(:contact_id => contact.id).first)
+      l = Forward.new
+      l.contact_id = contact.id
+      l.note_id = self.id
+      l.save!
+    end
+  end
+
+  def forward_count
+    @forward_count ||= self.forwards.count
+  end
+
   def html
     linkified_note
+  end
+
+  def like_by!(contact)
+    if !(l = self.likes.where(:contact_id => contact.id).first)
+      l = Like.new
+      l.contact_id = contact.id
+      l.note_id = self.id
+      l.save!
+    end
+  end
+
+  def like_count
+    @like_count ||= self.likes.count
   end
 
   def linkified_note(opts = {})
@@ -169,6 +211,10 @@ class Note < DBModel
     !!self.contact.user
   end
 
+  def reply_count
+    @reply_count ||= Note.where(:parent_note_id => self.id).count
+  end
+
   def thread
     tns = Note.where(:conversation => self.conversation).
       order(:created_at).to_a
@@ -189,6 +235,18 @@ class Note < DBModel
       end
     end
     order
+  end
+
+  def unforward_by!(contact)
+    if (l = self.forwards.where(:contact_id => contact.id).first)
+      l.destroy
+    end
+  end
+
+  def unlike_by!(contact)
+    if (l = self.likes.where(:contact_id => contact.id).first)
+      l.destroy
+    end
   end
 
   def url

@@ -1,0 +1,17 @@
+<h1 class="note">
+  <a href="<%= App.base_url %>" class="notes_back_link">
+    <%= partial "../home/back_button" %>
+  </a>
+  Note
+</h1>
+
+<%= partial "note", :locals => { :note => @note, :dedicated => true } %>
+
+<h1 class="note">
+  <%= @note.forward_count %> Forward<%= @note.forward_count == 1 ? "" : "s" %>
+</h1>
+
+<% @note.forwards.each do |forward| %>
+  <%= partial "../home/contact", :locals => { :contact => forward.contact } %>
+<% end %>
+
