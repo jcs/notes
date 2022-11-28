@@ -59,10 +59,7 @@ module Rack
         "-------------------------------",
       ]
 
-      (env["sinatra.error.params"] || {}).each do |k,v|
-        if App.filtered_parameters.select{|f| f.match(k) }.any?
-          v = "[filtered]"
-        end
+      App.filter_parameters(env["sinatra.error.params"] || {}).each do |k,v|
         o.push "  #{k}: #{v}"
       end
 

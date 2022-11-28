@@ -20,6 +20,7 @@ APP_ROOT = File.realpath(File.dirname(__FILE__) + "/../")
 
 require "active_record"
 require "active_support/time"
+require "securerandom"
 
 require "sinatra/base"
 require "sinatra/namespace"
@@ -30,6 +31,9 @@ require "rack/csrf"
 # configure mail early in case of exceptions
 require "pony"
 require "#{APP_ROOT}/config/mail.rb"
+
+# setup our custom logging to STDOUT
+require "#{APP_ROOT}/lib/logging.rb"
 
 class App < Sinatra::Base
   register Sinatra::Namespace
@@ -90,11 +94,11 @@ class App < Sinatra::Base
   Time.zone = "Central Time (US & Canada)"
   ActiveRecord::Base.time_zone_aware_attributes = true
 
-  # non-colored logging
-  enable :logging
+  # disable built-in apache-style logging in sinatra and disable color from AR
+  disable :logging
   ActiveSupport::LogSubscriber.colorize_logging = false
   @@logger = ::Logger.new(STDOUT)
-  use Rack::CommonLogger, @@logger
+  use Sinatree::Logger, @@logger
 
   # encrypted sessions, requiring a per-app secret to be configured
   enable :sessions
@@ -117,6 +121,11 @@ class App < Sinatra::Base
   Tilt.prefer Tilt::ErubisTemplate
   Tilt.register Tilt::ErubisTemplate, "html.erb"
 
+  # before every request, store controller for Logger
+  before do
+    request.current_controller = self.class
+  end
+
   class << self
     alias_method :env, :environment
     attr_accessor :path
@@ -131,6 +140,19 @@ class App < Sinatra::Base
       end
 
       nil
+    end
+
+    def filter_parameters(params)
+      params.reduce({}) do |acc, (key,value)|
+        if value.is_a?(Hash)
+          acc[key] = filter_parameters(value)
+        elsif App.filtered_parameters.detect{|fp| key.match(fp) }
+          acc[key] = "[filtered]"
+        else
+          acc[key] = value
+        end
+        acc
+      end
     end
 
     def logger
