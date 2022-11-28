@@ -2,7 +2,7 @@
 <article class="note <%= dedicated ? "dedicated" : "" %>" id="<%= note.id %>">
   <a href="<%= note.contact.url %>">
     <img class="avatar <%= note.contact.user_id ? "local" : "" %>"
-      src="<%= App.base_url %>/avatars/<%= note.contact.address %>"
+      src="<%= App.base_url %>/avatars/<%= h note.contact.address %>"
       width=50 height=50>
   </a>
 

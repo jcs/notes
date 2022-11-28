@@ -21,7 +21,7 @@ class Note < DBModel
 
   scope :timeline, -> { order("created_at DESC") }
 
-  before_create :assign_conversation
+  before_create :assign_conversation, :assign_ids
 
   after_create do
     if local? then self.activitystream_publish!("Create") end
@@ -31,16 +31,6 @@ class Note < DBModel
   end
 
   attr_accessor :like_count, :reply_count, :forward_count
-
-  def self.id_from_note_url(url)
-    if url.starts_with?(App.base_url)
-      path = url[App.base_url.bytesize .. -1]
-      if m = path.match(/\A\/(\d+)/)
-        return m[1]
-      end
-    end
-    nil
-  end
 
   def self.ingest_note!(asvm)
     if !asvm.is_a?(ActivityStreamVerifiedMessage)
@@ -52,11 +42,11 @@ class Note < DBModel
       raise "note has no id"
     end
 
-    dbnote = asvm.contact.notes.where(:foreign_id => note["id"]).first
+    dbnote = asvm.contact.notes.where(:public_id => note["id"]).first
     if !dbnote
       dbnote = Note.new
       dbnote.contact_id = asvm.contact.id
-      dbnote.foreign_id = note["id"]
+      dbnote.public_id = note["id"]
     end
     dbnote.created_at = DateTime.parse(note["published"])
     if note["updated"] && note["updated"] != note["published"]
@@ -65,6 +55,12 @@ class Note < DBModel
     dbnote.foreign_object = note.to_json
     dbnote.conversation = note["conversation"]
     dbnote.note = note["content"]
+
+    if note["inReplyTo"].present? &&
+    (parent = Note.where(:public_id => note["inReplyTo"]).first)
+      dbnote.parent_note_id = parent.id
+    end
+
     dbnote.save!
     dbnote
   end
@@ -93,7 +89,7 @@ class Note < DBModel
 
     {
       "@context" => ActivityStream::NS,
-      "id" => "#{self.user.activitystream_url}/#{self.id}",
+      "id" => self.public_id,
       "type" => "Note",
       "published" => self.created_at.utc.iso8601,
       "updated" => self.note_modified_at ?
@@ -266,6 +262,17 @@ private
         self.conversation = self.parent_note.conversation
       else
         self.conversation = "#{App.base_url}/threads/#{UniqueId.get}"
+      end
+    end
+  end
+
+  def assign_ids
+    if self.local?
+      if self.id.blank?
+        self.id = UniqueId.get
+      end
+      if self.public_id.blank?
+        self.public_id = "#{self.user.activitystream_url}/#{self.id}"
       end
     end
   end

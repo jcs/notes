@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_11_27_225217) do
+ActiveRecord::Schema.define(version: 2022_11_28_000131) do
 
   create_table "attachment_blobs", force: :cascade do |t|
     t.integer "attachment_id"
@@ -92,13 +92,13 @@ ActiveRecord::Schema.define(version: 2022_11_27_225217) do
     t.text "import_id"
     t.string "conversation"
     t.text "foreign_object"
-    t.string "foreign_id"
     t.datetime "note_modified_at"
+    t.string "public_id"
     t.index ["contact_id"], name: "index_notes_on_contact_id"
     t.index ["conversation"], name: "index_notes_on_conversation"
-    t.index ["foreign_id"], name: "index_notes_on_foreign_id"
     t.index ["import_id"], name: "index_notes_on_import_id", unique: true
     t.index ["parent_note_id"], name: "index_notes_on_parent_note_id"
+    t.index ["public_id"], name: "index_notes_on_public_id", unique: true
   end
 
   create_table "queue_entries", force: :cascade do |t|

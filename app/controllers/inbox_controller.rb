@@ -17,9 +17,12 @@ class InboxController < ApplicationController
     end
 
     case asvm.message["type"]
+    when "Accept"
+      # nothing to do
+
     when "Announce"
-      if (note = @user.contact.notes.where(:id =>
-      Note.id_from_note_url(asvm.message["object"])).first)
+      if (note = @user.contact.notes.where(:public_id =>
+      asvm.message["object"]).first)
         note.forward_by!(asvm.contact)
         App.logger.info "[c#{asvm.contact.id}] [n#{note.id}] forwarded"
       end
@@ -38,7 +41,7 @@ class InboxController < ApplicationController
       case type
       when "Tombstone"
         if (note = asvm.contact.notes.
-        where(:foreign_id => asvm.message["object"]["id"]).first)
+        where(:public_id => asvm.message["object"]["id"]).first)
           App.logger.info "[c#{asvm.contact.id}] [n#{note.id}] deleted note"
           note.destroy
         end
@@ -60,8 +63,8 @@ class InboxController < ApplicationController
       end
 
     when "Like"
-      if (note = @user.contact.notes.where(:id =>
-      Note.id_from_note_url(asvm.message["object"])).first)
+      if (note = @user.contact.notes.where(:public_id =>
+      asvm.message["object"]).first)
         note.like_by!(asvm.contact)
         App.logger.info "[c#{asvm.contact.id}] [n#{note.id}] liked"
       end
@@ -69,15 +72,15 @@ class InboxController < ApplicationController
     when "Undo"
       case type
       when "Announce"
-        if (note = @user.contact.notes.where(:id =>
-        Note.id_from_note_url(asvm.message["object"]["object"])).first)
+        if (note = @user.contact.notes.where(:public_id =>
+        asvm.message["object"]["object"]).first)
           note.unforward_by!(asvm.contact)
           App.logger.info "[c#{asvm.contact.id}] [n#{note.id}] unforwarded"
         end
 
       when "Like"
-        if (note = @user.contact.notes.where(:id =>
-        Note.id_from_note_url(asvm.message["object"]["object"])).first)
+        if (note = @user.contact.notes.where(:public_id =>
+        asvm.message["object"]["object"]).first)
           note.unlike_by!(asvm.contact)
           App.logger.info "[c#{asvm.contact.id}] [n#{note.id}] unliked"
         end
