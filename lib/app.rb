@@ -41,6 +41,10 @@ class App < Sinatra::Base
   cattr_accessor :name
   @@name = "App"
 
+  # for controllers to be relative to a global base path
+  cattr_accessor :base_path
+  @@base_path = "/"
+
   # to be replaced by an absolute url with scheme/domain
   cattr_accessor :base_url
   @@base_url = "/"
@@ -156,6 +160,11 @@ class App < Sinatra::Base
   if File.exists?(_c = "#{App.root}/config/#{App.environment}.rb")
     require _c
   end
+
+  # per-app initialization, not specific to environment
+  if File.exists?(_c = "#{App.root}/config/app.rb")
+    require _c
+  end
 end
 
 # bring in model base
@@ -230,9 +239,4 @@ ApplicationController.subclasses.each do |subklass|
 
     App.all_routes[p] = subklass
   end
-end
-
-# per-app initialization, not specific to environment
-if File.exists?(_c = "#{App.root}/config/app.rb")
-  require _c
 end
