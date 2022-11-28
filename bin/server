@@ -17,4 +17,8 @@
 
 P=`dirname $0`
 
-bundle exec shotgun --port 4567 $P/../config.ru
+if [ X"$RACK_ENV" = X"production" -o X"$RACK_ENV" = X"deployment" ]; then
+	bundle exec rackup --port 4567 $P/../config.ru
+else
+	bundle exec shotgun --port 4567 $P/../config.ru
+fi
