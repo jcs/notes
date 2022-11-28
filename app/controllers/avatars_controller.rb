@@ -1,5 +1,5 @@
 class AvatarsController < ApplicationController
-  self.path = "#{BASE_PATH}/avatars"
+  self.path = "#{App.base_path}/avatars"
 
   DEFAULT_AVATAR = "iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAQMAAACQp+OdAAAABlBMVEUAAAD///+l2Z/dAAAAaklEQVQoz63RwQmAMAwF0ECvhYzU1bOBqzhA4BsVJb8VKmgufYekkB+RoRrsNygIzQRYGQVwhgLIgLWATRBv/JjhtSpj7HmcWhjvpqxD37NvzHDxUpSBc50pJCOSO6K7IWcqCX4d9xuG2gAIUwjcjcJ9hQAAAABJRU5ErkJggg=="
 

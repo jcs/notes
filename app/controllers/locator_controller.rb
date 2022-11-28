@@ -1,5 +1,5 @@
 class LocatorController < ApplicationController
-  self.path = "#{BASE_PATH}/locate"
+  self.path = "#{App.base_path}/locate"
 
   get "/:acct" do
     acct = params[:acct].to_s.scan(/\A(.+@.+\..+)\z/).flatten[0]

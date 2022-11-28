@@ -1,13 +1,12 @@
 class ApplicationController < App
   set :default_builder, "GroupedFieldFormBuilder"
 
-  BASE_PATH = "/notes"
-
   use Rack::Csrf, :raise => false, :skip_if => lambda {|req|
     # :skip => [ "POST:/notes/inbox" ] should work but request.path_info is not
     # set properly with our routing
     req.request_method.upcase == "POST" &&
-      req.env["REQUEST_PATH"] == "/notes/inbox"
+      (req.env["REQUEST_PATH"] == "#{App.base_path}/inbox" ||
+      req.env["REQUEST_PATH"].starts_with?("#{App.base_path}/api/v1"))
   }
 
   before do

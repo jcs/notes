@@ -1,5 +1,5 @@
 class OutboxController < ApplicationController
-  self.path = "#{BASE_PATH}/outbox"
+  self.path = "#{App.base_path}/outbox"
 
   PER_PAGE = 20
 

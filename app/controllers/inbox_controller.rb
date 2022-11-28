@@ -1,5 +1,5 @@
 class InboxController < ApplicationController
-  self.path = "#{BASE_PATH}/inbox"
+  self.path = "#{App.base_path}/inbox"
 
   post "/" do
     asvm = ActivityStream.verified_message_from(request)

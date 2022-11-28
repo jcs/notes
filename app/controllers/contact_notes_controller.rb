@@ -1,5 +1,5 @@
 class ContactNotesController < ApplicationController
-  self.path = "#{BASE_PATH}/from"
+  self.path = "#{App.base_path}/from"
 
   PER_PAGE = 20
 

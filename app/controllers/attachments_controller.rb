@@ -1,5 +1,5 @@
 class AttachmentsController < ApplicationController
-  self.path = "#{BASE_PATH}/attachments"
+  self.path = "#{App.base_path}/attachments"
 
   get "/:id" do
     attachment = Attachment.where(:id => params[:id]).first

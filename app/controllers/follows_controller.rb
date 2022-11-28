@@ -1,17 +1,17 @@
 class FollowsController < ApplicationController
   self.path = [
-    "#{BASE_PATH}/followers",
-    "#{BASE_PATH}/following",
+    "#{App.base_path}/followers",
+    "#{App.base_path}/following",
   ]
 
   PER_PAGE = 20
 
   before do
-    if request.path.match(/\A#{Regexp.escape(BASE_PATH)}\/followers/)
+    if request.path.match(/\A#{Regexp.escape(App.base_path)}\/followers/)
       @collection = :followers
       @ar_collection = :followers
       @title = "Followers"
-    elsif request.path.match(/\A#{Regexp.escape(BASE_PATH)}\/following/)
+    elsif request.path.match(/\A#{Regexp.escape(App.base_path)}\/following/)
       @collection = :following
       @ar_collection = :followings
       @title = "Following"

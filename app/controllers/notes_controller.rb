@@ -1,5 +1,5 @@
 class NotesController < ApplicationController
-  self.path = BASE_PATH
+  self.path = App.base_path
 
   PER_PAGE = 20
 

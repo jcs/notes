@@ -8,18 +8,20 @@ Dir.glob(Gem.loaded_specs["gd2-ffij"].full_gem_path + "/lib/gd2/*.rb").each do |
 end
 
 class App
-  cattr_accessor :domain, :site_title
+  cattr_accessor :domain, :site_title, :owner
 end
 
 App.name = "Notes"
 App.domain = "example.com"
+App.base_path = "/notes"
 App.site_title = "#{App.domain} #{App.name}"
-App.exception_recipients = [ "user@example.com" ]
+App.owner = "user@example.com"
+App.exception_recipients = [ App.owner ]
 
 if App.development?
-  App.base_url = "http://localhost:4567/notes"
+  App.base_url = "http://localhost:4567#{App.base_path}"
 else
-  App.base_url = "https://#{App.domain}/notes"
+  App.base_url = "https://#{App.domain}#{App.base_path}"
 end
 
 App.set :sessions, App.sessions.merge({
