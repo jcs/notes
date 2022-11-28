@@ -1,13 +1,20 @@
 class QueueEntry < DBModel
   belongs_to :contact
   belongs_to :user
+  belongs_to :note
 
-  ACTIONS = [
-    :contact_refresh,
-    :contact_refresh_for_actor,
-    :note_create,
-    :signed_post,
-  ]
+  ACTIONS = {
+    :attachment_fetch => proc{|qe|
+      Attachment.fetch_for_queue_entry(qe)
+    },
+    :contact_refresh => proc{|qe|
+      Contact.refresh_for_queue_entry(qe)
+    },
+    :signed_post => proc{|qe|
+      ActivityStream.signed_post_with_key(self.contact.inbox, self.object_json,
+        self.user.activitystream_key_id, self.user.private_key)
+    },
+  }
 
   MAX_TRIES = 10
 
@@ -20,11 +27,11 @@ class QueueEntry < DBModel
   def process!
     ok = false
 
-    if !ACTIONS.include?(self.action.to_sym)
+    if !ACTIONS[self.action.to_sym]
       raise "unknown action #{self.action.inspect}"
     end
 
-    if self.send(self.action)
+    if ACTIONS[self.action.to_sym].call(self)
       self.destroy
       return
     end
@@ -40,32 +47,6 @@ class QueueEntry < DBModel
     self.save!
 
     App.logger.info "[q#{self.id}] failed, retrying at #{self.next_try_at}"
-  end
-
-  # actions
-
-  def contact_refresh_for_actor
-    Contact.refresh_for_actor(self.object["actor"], nil, true)
-  end
-
-  def contact_refresh
-    if !self.contact.refresh!
-      return false
-    end
-
-    App.logger.info "[q#{self.id}] [c#{self.contact.id}] refreshed " <<
-      "contact #{self.contact.address}"
-    true
-  end
-
-  def note_create
-    self.user.activitystream_signed_post_to_contact(self.contact,
-      self.object_json)
-  end
-
-  def signed_post
-    ActivityStream.signed_post_with_key(self.contact.inbox, self.object_json,
-      self.user.activitystream_key_id, self.user.private_key)
   end
 
 private

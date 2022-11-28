@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_11_28_000131) do
+ActiveRecord::Schema.define(version: 2022_11_28_155635) do
 
   create_table "attachment_blobs", force: :cascade do |t|
     t.integer "attachment_id"
@@ -25,6 +25,7 @@ ActiveRecord::Schema.define(version: 2022_11_28_000131) do
     t.integer "height"
     t.integer "duration"
     t.string "source"
+    t.string "summary"
     t.index ["note_id"], name: "index_attachments_on_note_id"
   end
 
@@ -91,7 +92,7 @@ ActiveRecord::Schema.define(version: 2022_11_28_000131) do
     t.integer "parent_note_id"
     t.text "import_id"
     t.string "conversation"
-    t.text "foreign_object"
+    t.text "foreign_object_json"
     t.datetime "note_modified_at"
     t.string "public_id"
     t.index ["contact_id"], name: "index_notes_on_contact_id"
@@ -109,7 +110,9 @@ ActiveRecord::Schema.define(version: 2022_11_28_000131) do
     t.integer "contact_id"
     t.string "action"
     t.text "object_json"
+    t.integer "note_id"
     t.index ["contact_id"], name: "index_queue_entries_on_contact_id"
+    t.index ["note_id"], name: "index_queue_entries_on_note_id"
   end
 
   create_table "users", force: :cascade do |t|

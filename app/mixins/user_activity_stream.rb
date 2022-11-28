@@ -84,9 +84,9 @@ module UserActivityStream
     }
 
     q = QueueEntry.new
-    q.contact_id = contact.id
+    q.action = :signed_post
     q.user_id = self.id
-    q.action = "signed_post"
+    q.contact_id = contact.id
     q.object_json = reply.to_json
     q.save!
 

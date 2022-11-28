@@ -19,12 +19,14 @@ class Attachment < DBModel
     a = Attachment.new
     a.source = url
 
-    s = ActivityStream.sponge
-    a.build_blob
-    a.blob.data = s.get(url)
+    res = ActivityStream.sponge.get(url)
+    if !res.ok? || res.body.to_s == ""
+      return nil
+    end
 
-    res = s.last_response
-    a.type = res["Content-Type"] || res["Content-type"] || res["content-type"]
+    a.build_blob
+    a.blob.data = res.body
+    a.type = res.headers["Content-Type"]
 
     if a.image?
       begin
@@ -81,6 +83,21 @@ class Attachment < DBModel
       a.width, a.height = result.to_s.unpack("LL")
     end
     a
+  end
+
+  def self.fetch_for_queue_entry(qe)
+    at = Attachment.build_from_url(qe.object["url"])
+    if !at
+      App.logger.error "[q#{qe.id}] [n#{note.id}] failed fetching " <<
+        "attachment at #{url.inspect}"
+      return false
+    end
+    at.summary = qe.object["summary"]
+    at.note_id = qe.note_id
+    at.save!
+
+    App.logger.info "[q#{qe.id}] [n#{qe.note_id}] [a#{at.id}] fetched " <<
+      "attachment of size #{at.blob.data.bytesize}"
   end
 
   def activitystream_object

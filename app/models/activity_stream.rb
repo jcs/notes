@@ -12,7 +12,7 @@ class ActivityStream
   def self.sponge
     @@sponge ||= Sponge.new
     @@sponge.debug = ActivityStream.debug
-    @@sponge.user_agent = "#{App.domain}-activity/1.0"
+    @@sponge.user_agent = "#{App.domain}-notes/1.0"
     @@sponge.keep_alive = true
     @@sponge
   end
@@ -44,11 +44,14 @@ class ActivityStream
       end
     end
 
-    body = ActivityStream.sponge.fetch(endpoint, :get, nil, nil, {
+    res = ActivityStream.sponge.fetch(endpoint, :get, nil, nil, {
       "Accept" => ACTIVITY_TYPE })
-    aj = JSON.parse(body)
 
-    context = aj["@context"]
+    if !res.ok?
+      raise "fetch of #{endpoint.inspect} failed (#{res.status})"
+    end
+
+    context = res.json["@context"]
     if !context.is_a?(Array)
       context = [ context ]
     end
@@ -57,16 +60,16 @@ class ActivityStream
       raise "invalid @context"
     end
 
-    if aj["id"] != endpoint
-      raise "aj id #{aj["id"].inspect} != endpoint #{endpoint.inspect}"
+    if res.json["id"] != endpoint
+      raise "LD id #{res.json["id"].inspect} != endpoint #{endpoint.inspect}"
     end
 
-    if !aj["publicKey"] || !aj["publicKey"]["id"] ||
-    !aj["publicKey"]["publicKeyPem"].to_s.match(/BEGIN PUBLIC KEY/)
+    if !res.json["publicKey"] || !res.json["publicKey"]["id"] ||
+    !res.json["publicKey"]["publicKeyPem"].to_s.match(/BEGIN PUBLIC KEY/)
       raise "no publicKey"
     end
 
-    return aj
+    return res.json
 
   rescue => e
     App.logger.info "failed fetching endpoint for #{actor.inspect}: " +
@@ -98,9 +101,9 @@ class ActivityStream
       "Content-Type" => ACTIVITY_TYPE
     }))
 
-    if !(200..299).include?(ActivityStream.sponge.last_status)
-      App.logger.info "failed with status " <<
-        "#{ActivityStream.sponge.last_status}: #{res.to_s[0, 100]}"
+    if !res.ok?
+      App.logger.info "failed with status #{res.status}: " <<
+        res.body.to_s[0, 100]
       return false
     end
 

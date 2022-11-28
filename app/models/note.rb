@@ -52,7 +52,7 @@ class Note < DBModel
     if note["updated"] && note["updated"] != note["published"]
       dbnote.note_modified_at = DateTime.parse(note["updated"])
     end
-    dbnote.foreign_object = note.to_json
+    dbnote.foreign_object_json = note.to_json
     dbnote.conversation = note["conversation"]
     dbnote.note = note["content"]
 
@@ -62,6 +62,39 @@ class Note < DBModel
     end
 
     dbnote.save!
+
+    # match our attachment list with the note's, deleting or creating as
+    # necessary
+    have = dbnote.attachments.to_a
+    want = dbnote.foreign_object["attachment"] || []
+    to_fetch = {}
+    to_delete = {}
+
+    have.each do |h|
+      if !want.select{|a| a["url"] }.include?(h.source)
+        to_delete[h.id] = true
+      end
+    end
+    want.each do |obj|
+      if !have.select{|a| a.source }.include?(obj["url"])
+        to_fetch[obj["url"]] = obj
+      end
+    end
+
+    if to_delete.any?
+      dbnote.attachments.where(:id => to_delete.keys).each do |a|
+        a.destroy
+      end
+    end
+
+    to_fetch.each do |u,obj|
+      qe = QueueEntry.new
+      qe.action = :attachment_fetch
+      qe.note_id = dbnote.id
+      qe.object_json = obj.to_json
+      qe.save!
+    end
+
     dbnote
   end
 
@@ -121,12 +154,17 @@ class Note < DBModel
 
     self.user.followers.includes(:contact).each do |follower|
       q = QueueEntry.new
-      q.action = "signed_post"
-      q.contact_id = follower.contact.id
+      q.action = :signed_post
       q.user_id = self.contact.user.id
+      q.contact_id = follower.contact.id
+      q.note_id = self.id
       q.object_json = js
       q.save!
     end
+  end
+
+  def foreign_object
+    @foreign_object ||= JSON.parse(self.foreign_object_json)
   end
 
   def forward_by!(contact)

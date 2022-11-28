@@ -20,9 +20,10 @@ while true do
         "(try #{qe.tries + 1})"
       qe.process!
     rescue => e
-      App.logger.error "[q#{qe.id}] failed processing: #{e.message}"
+      App.logger.error "[q#{qe.id}] failed processing: #{e.message}\n" <<
+        e.backtrace.map{|l| "   #{l}" }.join("\n")
 
-      if App.exception_recipients
+      if App.exception_recipients && App.exception_recipients.any?
         Pony.mail(
           :to => App.exception_recipients,
           :subject => "[#{App.name}] activitystreamer #{e.class} " <<

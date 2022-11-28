@@ -12,9 +12,13 @@ class Contact < DBModel
 
   def self.queue_refresh_for_actor!(actor)
     q = QueueEntry.new
-    q.action = "contact_refresh_for_actor"
+    q.action = :contact_refresh
     q.object_json = { "actor" => actor }.to_json
     q.save!
+  end
+
+  def self.refresh_for_queue_entry(qe)
+    self.refresh_for_actor(qe.object["actor"], nil, true)
   end
 
   def self.refresh_for_actor(actor, person_ld = nil, fetch_avatar = false)
@@ -33,7 +37,12 @@ class Contact < DBModel
     retried = false
     begin
       contact = Contact.where(:actor => person_ld["id"]).first
-      if !contact
+      if contact
+        if contact.user_id
+          # refuse refreshing
+          return true
+        end
+      else
         contact = Contact.new
       end
       domain = URI.parse(person_ld["id"]).host
