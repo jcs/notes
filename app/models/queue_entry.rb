@@ -11,12 +11,12 @@ class QueueEntry < DBModel
       Contact.refresh_for_queue_entry(qe)
     },
     :signed_post => proc{|qe|
-      ActivityStream.signed_post_with_key(self.contact.inbox, self.object_json,
-        self.user.activitystream_key_id, self.user.private_key)
+      ActivityStream.signed_post_with_key(qe.contact.inbox, qe.object_json,
+        qe.user.activitystream_key_id, qe.user.private_key)
     },
   }
 
-  MAX_TRIES = 10
+  MAX_TRIES = 8
 
   before_create :assign_first_try
 
@@ -46,10 +46,10 @@ class QueueEntry < DBModel
     end
 
     self.tries += 1
-    self.next_try_at = Time.now + (2 ** (self.tries + 3))
+    self.next_try_at = Time.now + (2 ** (self.tries + 5))
     self.save!
 
-    App.logger.info "[q#{self.id}] failed, retrying at #{self.next_try_at}"
+    App.logger.info "[q#{self.id}] retrying at #{self.next_try_at}"
   end
 
 private
