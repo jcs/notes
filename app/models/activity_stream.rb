@@ -78,11 +78,7 @@ class ActivityStream
   end
 
   def self.is_for_request?(request)
-    ret = ActivityStream::ACTIVITY_TYPES.include?(request.accept[0].to_s)
-    if ret
-      App.logger.info "is an activity stream request"
-    end
-    ret
+    ActivityStream::ACTIVITY_TYPES.include?(request.accept[0].to_s)
   end
 
   def self.signed_post_with_key(url, json, key_id, private_key)

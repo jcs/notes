@@ -11,18 +11,17 @@ class WebFinger
     uri = "https://#{m[2]}/.well-known/webfinger?resource=acct:" +
       CGI.escape("#{m[1]}@#{m[2]}")
 
-    js = nil
     begin
-      body = ActivityStream.sponge.fetch(uri, :get)
-      if !(200 .. 299).include?(ActivityStream.sponge.last_status)
-        raise "bad status #{ActivityStream.sponge.last_status}"
+      res = ActivityStream.sponge.fetch(uri, :get)
+      if !res.ok?
+        raise "bad status #{res.status}"
       end
-      js = JSON.parse(body)
+      return res.json
+
     rescue => e
       App.logger.info "failed webfingering #{uri.inspect}: #{e.message}"
-      return
     end
 
-    js
+    nil
   end
 end

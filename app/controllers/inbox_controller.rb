@@ -4,13 +4,12 @@ class InboxController < ApplicationController
   post "/" do
     asvm = ActivityStream.verified_message_from(request)
     if !asvm
-      App.logger.error "HTTP signature verification failed, body: " <<
-        request.body.read.inspect
+      request.log_extras[:error] = "HTTP signature verification failed"
       halt 400, "HTTP signature verification failed"
     end
 
-    App.logger.info "[c#{asvm.contact.id}] verified message from " <<
-      "#{asvm.contact.actor}: #{asvm.message.inspect}"
+    request.log_extras[:contact] = asvm.contact.id
+    request.log_extras[:actor] = asvm.contact.actor
 
     type = if asvm.message["object"]
       asvm.message["object"]["type"]
@@ -24,17 +23,19 @@ class InboxController < ApplicationController
       if (note = @user.contact.notes.where(:public_id =>
       asvm.message["object"]).first)
         note.forward_by!(asvm.contact)
-        App.logger.info "[c#{asvm.contact.id}] [n#{note.id}] forwarded"
+        request.log_extras[:note] = note.id
+        request.log_extras[:result] = "forwarded note"
       end
 
     when "Create"
       case type
       when "Note"
         if (note = Note.ingest_note!(asvm))
-          App.logger.info "[c#{note.contact.id}] [n#{note.id}] created note"
+          request.log_extras[:note] = note.id
+          request.log_extras[:result] = "created note"
         end
       else
-        App.logger.error "unsupported Create for #{type}"
+        request.log_extras[:error] = "unsupported Create for #{type}"
       end
 
     when "Delete"
@@ -42,16 +43,17 @@ class InboxController < ApplicationController
       when "Tombstone"
         if (note = asvm.contact.notes.
         where(:public_id => asvm.message["object"]["id"]).first)
-          App.logger.info "[c#{asvm.contact.id}] [n#{note.id}] deleted note"
           note.destroy
+          request.log_extras[:note] = note.id
+          request.log_extras[:result] = "deleted note"
         end
       when "User"
         if (f = @user.followers.where(:contact_id => asvm.contact.id).first)
           f.destroy
-          App.logger.info "[c#{asvm.contact.id}] unfollowed user"
+          request.log_extras[:result] = "unfollowed user"
         end
       else
-        App.logger.error "unsupported Delete for #{type}"
+        request.log_extras[:error] = "unsupported Delete for #{type}"
       end
 
     when "Follow"
@@ -59,14 +61,15 @@ class InboxController < ApplicationController
       when "Person"
         @user.activitystream_gain_follower!(asvm.contact, asvm.message)
       else
-        App.logger.error "unsupported Follow for #{type}"
+        request.log_extras[:error] = "unsupported Follow for #{type}"
       end
 
     when "Like"
       if (note = @user.contact.notes.where(:public_id =>
       asvm.message["object"]).first)
         note.like_by!(asvm.contact)
-        App.logger.info "[c#{asvm.contact.id}] [n#{note.id}] liked"
+        request.log_extras[:note] = note.id
+        request.log_extras[:result] = "liked note"
       end
 
     when "Undo"
@@ -75,39 +78,42 @@ class InboxController < ApplicationController
         if (note = @user.contact.notes.where(:public_id =>
         asvm.message["object"]["object"]).first)
           note.unforward_by!(asvm.contact)
-          App.logger.info "[c#{asvm.contact.id}] [n#{note.id}] unforwarded"
+          request.log_extras[:note] = note.id
+          request.log_extras[:result] = "unforwarded"
         end
 
       when "Like"
         if (note = @user.contact.notes.where(:public_id =>
         asvm.message["object"]["object"]).first)
           note.unlike_by!(asvm.contact)
-          App.logger.info "[c#{asvm.contact.id}] [n#{note.id}] unliked"
+          request.log_extras[:note] = note.id
+          request.log_extras[:result] = "unliked"
         end
 
       when "Follow"
         if (f = @user.followers.where(:contact_id => asvm.contact.id).first)
           f.destroy
-          App.logger.info "[c#{asvm.contact.id}] unfollowed user"
+          request.log_extras[:result] = "unfollowed"
         end
       else
-        App.logger.error "unsupported Undo for #{type}"
+        request.log_extras[:error] = "unsupported Undo for #{type}"
       end
 
     when "Update"
       case type
       when "Note"
         if (note = Note.ingest_note!(asvm))
-          App.logger.info "[c#{note.contact.id}] [n#{note.id}] updated note"
+          request.log_extras[:note] = note.id
+          request.log_extras[:result] = "updated note"
         end
       when "Person"
         Contact.queue_refresh_for_actor!(asvm.contact.actor)
       else
-        App.logger.error "unsupported Update for #{type}"
+        request.log_extras[:error] = "unsupported Update for #{type}"
       end
 
     else
-      App.logger.error "unsupported #{asvm.message["type"]} action"
+      request.log_extras[:error] = "unsupported #{asvm.message["type"]} action"
     end
 
     "got it"
