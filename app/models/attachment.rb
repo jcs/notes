@@ -21,7 +21,7 @@ class Attachment < DBModel
 
     res = ActivityStream.sponge.get(url)
     if !res.ok? || res.body.to_s == ""
-      return nil
+      return nil, "failed fetching attachment #{url}: #{res.status}"
     end
 
     a.build_blob
@@ -82,15 +82,15 @@ class Attachment < DBModel
       #self.width, self.height, data = result.to_s.unpack("LLa*")
       a.width, a.height = result.to_s.unpack("LL")
     end
-    a
+
+    return a, nil
   end
 
   def self.fetch_for_queue_entry(qe)
-    at = Attachment.build_from_url(qe.object["url"])
+    at, err = Attachment.build_from_url(qe.object["url"])
     if !at
-      App.logger.error "[q#{qe.id}] [n#{note.id}] failed fetching " <<
+      return false, "[q#{qe.id}] [n#{note.id}] failed fetching " <<
         "attachment at #{url.inspect}"
-      return false
     end
     at.summary = qe.object["summary"]
     at.note_id = qe.note_id
@@ -98,6 +98,8 @@ class Attachment < DBModel
 
     App.logger.info "[q#{qe.id}] [n#{qe.note_id}] [a#{at.id}] fetched " <<
       "attachment of size #{at.blob.data.bytesize}"
+
+    return true, nil
   end
 
   def activitystream_object

@@ -22,14 +22,13 @@ class Contact < DBModel
   end
 
   def self.refresh_for_actor(actor, person_ld = nil, fetch_avatar = false)
-    if person_ld
-      App.logger.info "refreshing contact for #{actor.inspect}"
-    else
-      App.logger.info "refreshing contact for #{actor.inspect}, fetching LD"
-      person_ld = ActivityStream.get_json_ld(actor)
+    if !person_ld
+      if ActivityStream.debug
+        App.logger.info "refreshing contact for #{actor.inspect}, fetching LD"
+      end
+      person_ld, err = ActivityStream.get_json_ld(actor)
       if !person_ld
-        App.logger.error "failed to get Person LD for #{actor.inspect}"
-        return nil
+        return nil, err
       end
     end
 
@@ -40,7 +39,7 @@ class Contact < DBModel
       if contact
         if contact.user_id
           # refuse refreshing
-          return true
+          return true, nil
         end
       else
         contact = Contact.new
@@ -65,7 +64,7 @@ class Contact < DBModel
     if fetch_avatar
       if person_ld["icon"] && person_ld["icon"]["type"] == "Image" &&
       person_ld["icon"]["url"].to_s != ""
-        av = Attachment.build_from_url(person_ld["icon"]["url"])
+        av, err = Attachment.build_from_url(person_ld["icon"]["url"])
         if av
           if contact.avatar
             contact.avatar.destroy
@@ -73,24 +72,24 @@ class Contact < DBModel
           av.save!
           contact.avatar_attachment_id = av.id
           contact.save!
-        else
-          App.logger.error "[c#{contact.id}] failed fetching icon at " <<
-            "#{person_ld["icon"].inspect}"
         end
       elsif contact.avatar
-        App.logger.error "[c#{contact.id}] no avatar icon specified but " <<
-          "have attachment, deleting it"
         contact.avatar.destroy
         contact.avatar_attachment_id = nil
         contact.save!
+        return nil, "[c#{contact.id}] no avatar icon specified but " <<
+          "have attachment, deleting it"
       end
     end
 
-    contact
+    return contact, nil
   end
 
   def activitystream_get_json_ld
-    @_asld ||= ActivityStream.get_json_ld(self.actor)
+    if !@_asld
+      @_asld, err = ActivityStream.get_json_ld(self.actor)
+    end
+    @_asld
   end
 
   def actor_uri

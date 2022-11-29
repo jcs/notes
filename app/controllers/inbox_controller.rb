@@ -2,18 +2,20 @@ class InboxController < ApplicationController
   self.path = "#{App.base_path}/inbox"
 
   post "/" do
-    asvm = ActivityStream.verified_message_from(request)
+    asvm, err = ActivityStream.verified_message_from(request)
     if !asvm
-      request.log_extras[:error] = "HTTP signature verification failed"
-      halt 400, "HTTP signature verification failed"
+      request.log_extras[:error] = err
+      halt 400, request.log_extras[:error]
     end
-
-    request.log_extras[:contact] = asvm.contact.id
-    request.log_extras[:actor] = asvm.contact.actor
 
     type = if asvm.message["object"]
       asvm.message["object"]["type"]
     end
+
+    request.log_extras[:contact] = asvm.contact.id
+    request.log_extras[:actor] = asvm.contact.actor
+    request.log_extras[:message_type] = asvm.message["type"]
+    request.log_extras[:object_type] = type
 
     case asvm.message["type"]
     when "Accept"

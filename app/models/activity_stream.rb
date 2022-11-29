@@ -17,16 +17,14 @@ class ActivityStream
     @@sponge
   end
 
-  def self.get_notes(actor)
-  end
-
   def self.get_json(url)
     res = ActivityStream.sponge.fetch(url, :get, nil, nil, {
       "Accept" => ACTIVITY_TYPE })
     if !res.ok?
-      return nil
+      return nil, "failed fetching #{url}: #{res.status}"
     end
-    res.json
+
+    return res.json, nil
   end
 
   def self.get_json_ld(actor)
@@ -37,9 +35,9 @@ class ActivityStream
       endpoint.fragment = nil
       endpoint = endpoint.to_s
     else
-      wf = WebFinger.finger_account(actor)
+      wf, err = WebFinger.finger_account(actor)
       if !wf
-        raise "failed to webfinger #{actor.inspect}"
+        return nil, err
       end
 
       begin
@@ -50,16 +48,14 @@ class ActivityStream
       end
 
       if endpoint.to_s == ""
-        App.logger.info "failed finding activity JSON URL in #{wf.inspect}"
-        return nil
+        return nil, "failed finding activity JSON URL in #{wf.inspect}"
       end
     end
 
     res = ActivityStream.sponge.fetch(endpoint, :get, nil, nil, {
       "Accept" => ACTIVITY_TYPE })
-
     if !res.ok?
-      raise "fetch of #{endpoint.inspect} failed (#{res.status})"
+      return nil, "fetch of #{endpoint.inspect} failed: #{res.status}"
     end
 
     context = res.json["@context"]
@@ -68,24 +64,18 @@ class ActivityStream
     end
 
     if !context.include?(NS)
-      raise "invalid @context"
-    end
-
-    if res.json["id"] != endpoint
-      raise "LD id #{res.json["id"].inspect} != endpoint #{endpoint.inspect}"
+      return nil, "invalid @context"
     end
 
     if !res.json["publicKey"] || !res.json["publicKey"]["id"] ||
     !res.json["publicKey"]["publicKeyPem"].to_s.match(/BEGIN PUBLIC KEY/)
-      raise "no publicKey"
+      return nil, "no publicKey"
     end
 
-    return res.json
+    return res.json, nil
 
   rescue => e
-    App.logger.info "failed fetching endpoint for #{actor.inspect}: " +
-      "#{e.message}"
-    return nil
+    return nil, "failed fetching endpoint for #{actor.inspect}: #{e.message}"
   end
 
   def self.is_for_request?(request)
@@ -99,28 +89,25 @@ class ActivityStream
 
     hs = HTTPSignature.sign_headers(url, json, key_id, private_key)
 
-    App.logger.info "doing signed POST to #{url} with #{key_id}"
     if ActivityStream.debug
-      App.logger.info "#{json}"
+      App.logger.info "doing signed POST to #{url} with #{key_id}: #{json}"
     end
 
     res = ActivityStream.sponge.fetch(url, :post, nil, json, hs.merge({
       "Content-Type" => ACTIVITY_TYPE
     }))
-
     if !res.ok?
-      App.logger.info "failed with status #{res.status}: " <<
+      return false, "failed with status #{res.status}: " <<
         res.body.to_s[0, 100]
-      return false
     end
 
-    true
+    return true, nil
   end
 
   def self.verified_message_from(request)
-    comps = HTTPSignature.signature_components_from(request)
+    comps, err = HTTPSignature.signature_components_from(request)
     if !comps
-      return nil
+      return nil, err
     end
 
     body = request.body.read
@@ -130,29 +117,33 @@ class ActivityStream
     if !cont
       if js["type"] == "Delete"
         # don't bother fetching actors for user deletion requests
-        raise "no contact with key id #{comps["keyId"].inspect}, ignoring " <<
-          "for Delete"
+        return nil, "no contact with key id #{comps["keyId"].inspect}, " <<
+          "ignoring for Delete"
       end
 
       # assume the keyid will point to the actor url, maybe with some fragment,
       # so we'll ingest it from the queue and have it ready for next time
       Contact.queue_refresh_for_actor!(comps["keyId"])
-      raise "no contact with key id #{comps["keyId"].inspect}"
+
+      cont = Contact.where(:key_id => comps["keyId"]).first
+      if !cont
+        return nil, "no contact with key id #{comps["keyId"].inspect}"
+      end
     end
 
-    if !HTTPSignature.signature_verified?(comps, cont.key_pem)
-      raise "signature not verified for contact #{cont.actor} key"
+    ret, err = HTTPSignature.signature_verified?(comps, cont.key_pem)
+    if !ret
+      return nil, "signature not verified for contact #{cont.actor} key: #{err}"
     end
 
     if js["actor"] != cont.actor
-      raise "LD actor #{js["actor"].inspect} != #{cont.actor}"
+      return nil, "LD actor #{js["actor"].inspect} != #{cont.actor}"
     end
 
-    return ActivityStreamVerifiedMessage.new(cont, js)
+    return ActivityStreamVerifiedMessage.new(cont, js), nil
 
   rescue => e
-    App.logger.info "failed verifying HTTP signature: #{e.message}"
-    return nil
+    return nil, "failed verifying HTTP signature: #{e.message}"
   end
 end
 

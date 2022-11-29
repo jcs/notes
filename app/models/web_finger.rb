@@ -4,8 +4,7 @@ class WebFinger
   def self.finger_account(addr)
     m = addr.match(/\A@?([^@]+)@([^@]+)\z/)
     if !m || m[2].to_s == ""
-      App.logger.info "bogus webfinger addr #{addr.inspect}"
-      return
+      return nil, "bogus webfinger addr #{addr.inspect}"
     end
 
     uri = "https://#{m[2]}/.well-known/webfinger?resource=acct:" +
@@ -14,14 +13,13 @@ class WebFinger
     begin
       res = ActivityStream.sponge.fetch(uri, :get)
       if !res.ok?
-        raise "bad status #{res.status}"
+        return nil, "bad status #{res.status}"
       end
-      return res.json
+
+      return res.json, nil
 
     rescue => e
-      App.logger.info "failed webfingering #{uri.inspect}: #{e.message}"
+      return nil, "failed webfingering #{uri.inspect}: #{e.message}"
     end
-
-    nil
   end
 end

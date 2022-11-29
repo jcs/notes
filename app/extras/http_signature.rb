@@ -31,14 +31,15 @@ class HTTPSignature
   def self.signature_components_from(request)
     sig = request.env["HTTP_SIGNATURE"]
     if sig.to_s == ""
-      raise "no signature"
+      return nil, "no signature"
     end
 
     comps = {}
     sig.split(",").each do |p|
       k, v = p.split("=", 2)
       if comps[k]
-        raise "duplicate value for #{k} (#{comps[k].inspect} and #{v.inspect})"
+        return nil, "duplicate value for #{k} (#{comps[k].inspect} and " <<
+          "#{v.inspect})"
       end
 
       if v.first == "\""
@@ -52,21 +53,21 @@ class HTTPSignature
     end
 
     if comps["keyId"].to_s == ""
-      raise "no keyId"
+      return nil, "no keyId"
     end
 
     if comps["algorithm"].to_s != "rsa-sha256"
-      raise "unsupported algorithm #{comps["algorithm"].inspect}"
+      return nil, "unsupported algorithm #{comps["algorithm"].inspect}"
     end
 
     date = request.env["HTTP_DATE"]
     if date.to_s == ""
-      raise "no date header"
+      return nil, "no date header"
     end
 
     udate = DateTime.parse(date).utc
     if Time.now - udate > EXPIRATION_WINDOW
-      raise "date #{udate} outside expiration window"
+      return nil, "date #{udate} outside expiration window"
     end
 
     payload = comps["headers"].split(" ").map{|h|
@@ -82,26 +83,26 @@ class HTTPSignature
       end
 
       if !v
-        raise "no header #{h.inspect} to gather into signature"
+        return nil, "no header #{h.inspect} to gather into signature"
       end
 
       "#{h}: #{v}"
     }.join("\n")
 
     if payload == ""
-      raise "no headers to sign"
+      return nil, "no headers to sign"
     end
 
     comps["payload"] = payload
 
     if comps["signature"].to_s == ""
-      raise "no signature component in signature header"
+      return nil, "no signature component in signature header"
     end
 
-    return comps
+    return comps, nil
+
   rescue => e
-    App.logger.info "failed verifying HTTP signature: #{e.message}"
-    return nil
+    return nil, "verification failure: #{e.message}"
   end
 
   def self.signature_verified?(components, key_pem)
@@ -110,13 +111,12 @@ class HTTPSignature
     rkey = OpenSSL::PKey::RSA.new(key_pem)
     if !rkey.verify(OpenSSL::Digest.new("SHA256"), sig_raw,
     components["payload"])
-      raise "public key verification failed!"
+      return false, "public key verification failed"
     end
 
-    return true
+    return true, nil
 
   rescue => e
-    App.logger.info "failed verifying HTTP signature: #{e.message}"
-    return false
+    return false, "failed verifying HTTP signature: #{e.message}"
   end
 end

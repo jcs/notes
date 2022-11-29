@@ -250,8 +250,7 @@ class Note < DBModel
   end
 
   def thread
-    tns = Note.where(:conversation => self.conversation).
-      order(:created_at).to_a
+    tns = Note.where(:conversation => self.conversation).order(:created_at).to_a
     order = tns.extract!{|n| n.parent_note_id.to_i == 0 } || []
     while tns.any?
       tn = tns.shift

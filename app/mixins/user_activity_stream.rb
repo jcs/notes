@@ -22,9 +22,9 @@ module UserActivityStream
   # activitystream actions
 
   def activitystream_delete!(actor)
-    ld = ActivityStream.get_json_ld(actor)
+    ld, err = ActivityStream.get_json_ld(actor)
     if !ld
-      raise "failed to get JSON LD for #{actor}"
+      return nil, err
     end
 
     msg = {
@@ -39,13 +39,14 @@ module UserActivityStream
 
     ActivityStream.signed_post_with_key(ld["inbox"], msg.to_json,
       self.activitystream_key_id, self.private_key)
+
+    return true, nil
   end
 
   def activitystream_follow!(actor)
-    contact = Contact.refresh_for_actor(actor)
+    contact, err = Contact.refresh_for_actor(actor)
     if !contact
-      App.logger.error "failed to get contact from update of #{actor.inspect}"
-      return
+      return nil, err
     end
 
     jmsg = {
@@ -70,6 +71,8 @@ module UserActivityStream
       following.save!
     rescue ActiveRecord::RecordNotUnique => e
     end
+
+    return true, nil
   end
 
   def activitystream_gain_follower!(contact, object)
@@ -103,6 +106,8 @@ module UserActivityStream
       App.logger.info "#{self.username} gained follower #{contact.actor}"
     rescue ActiveRecord::RecordNotUnique => e
     end
+
+    return true, nil
   end
 
   def activitystream_ping_followers!
@@ -118,21 +123,24 @@ module UserActivityStream
 
     self.followers.includes(:contact).each do |follower|
       begin
-        ActivityStream.signed_post_with_key(follower.contact.inbox,
+        ret, err = ActivityStream.signed_post_with_key(follower.contact.inbox,
           msg, self.activitystream_key_id, self.private_key)
+        if !ret
+          raise err
+        end
       rescue => e
         App.logger.error "failed updating #{follower.contact.actor}: " <<
           "#{e.message}"
       end
     end
 
-    true
+    return true, nil
   end
 
   def activitystream_unfollow!(actor)
-    ld = ActivityStream.get_json_ld(actor)
+    ld, err = ActivityStream.get_json_ld(actor)
     if !ld
-      raise "failed to get JSON LD for #{actor}"
+      return false, err
     end
 
     actor = ld["id"]
@@ -165,6 +173,8 @@ module UserActivityStream
     if f
       f.destroy
     end
+
+    return true, nil
   end
 
   def activitystream_object

@@ -31,10 +31,13 @@ class QueueEntry < DBModel
       raise "unknown action #{self.action.inspect}"
     end
 
-    if ACTIONS[self.action.to_sym].call(self)
+    ret, err = ACTIONS[self.action.to_sym].call(self)
+    if ret
       self.destroy
       return
     end
+
+    App.logger.error "[q#{self.id}] failed #{self.action}: #{err}"
 
     if self.tries >= MAX_TRIES
       App.logger.error "[q#{self.id}] too many retries, giving up"
