@@ -20,11 +20,22 @@ class ActivityStream
   def self.get_notes(actor)
   end
 
+  def self.get_json(url)
+    res = ActivityStream.sponge.fetch(url, :get, nil, nil, {
+      "Accept" => ACTIVITY_TYPE })
+    if !res.ok?
+      return nil
+    end
+    res.json
+  end
+
   def self.get_json_ld(actor)
     endpoint = nil
 
     if actor.starts_with?("https://")
-      endpoint = actor
+      endpoint = URI.parse(actor)
+      endpoint.fragment = nil
+      endpoint = endpoint.to_s
     else
       wf = WebFinger.finger_account(actor)
       if !wf
