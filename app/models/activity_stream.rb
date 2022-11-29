@@ -121,8 +121,19 @@ class ActivityStream
           "ignoring for Delete"
       end
 
-      # assume the keyid will point to the actor url, maybe with some fragment,
-      # so we'll ingest it from the queue and have it ready for next time
+      # assume the keyid will point to the actor url, maybe with some fragment
+
+      # try to fetch it within a second so we can process this request,
+      # otherwise we'll have to queue it up and wait for a retry of this
+      # request
+      begin
+        Timeout.timeout(1) do
+          Contact.refresh_for_actor(comps["keyId"], nil, false)
+        end
+      rescue Timeout::Error
+      end
+
+      # still schedule a full refresh of this actor to fetch their avatar
       Contact.queue_refresh_for_actor!(comps["keyId"])
 
       cont = Contact.where(:key_id => comps["keyId"]).first
