@@ -11,7 +11,7 @@ class ContactNotesController < ApplicationController
     erb :index
   end
 
-  get "/:address/pages/:page" do
+  get "/:address/page/:page" do
     find_contact
     find_pages
 

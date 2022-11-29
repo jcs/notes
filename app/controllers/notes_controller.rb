@@ -33,7 +33,7 @@ class NotesController < ApplicationController
     end
   end
 
-  get "/pages/:page" do
+  get "/page/:page" do
     @page = params[:page].to_i
     if @page < 1 || @page > @pages
       halt 404

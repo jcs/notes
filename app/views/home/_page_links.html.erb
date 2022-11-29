@@ -12,7 +12,7 @@
       <% elsif !page.is_a?(Integer) %>
         <span class="page ellipses"><%= page %></span>
       <% else %>
-        <a href="<%= @base_url %>/pages/<%= page %>" class="page"><%= page %></a>
+        <a href="<%= @base_url %>/page/<%= page %>" class="page"><%= page %></a>
       <% end %>
     <% end %>
   </div>
