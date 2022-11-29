@@ -19,6 +19,7 @@ while true do
       App.logger.info "[q#{qe.id}] processing #{qe.action} " <<
         "(try #{qe.tries + 1})"
       qe.process!
+
     rescue => e
       App.logger.error "[q#{qe.id}] failed processing: #{e.message}\n" <<
         e.backtrace.map{|l| "   #{l}" }.join("\n")
@@ -32,6 +33,7 @@ while true do
         )
       end
 
+      qe.increment!(:tries)
       sleep 5
     end
   end
