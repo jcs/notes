@@ -35,7 +35,7 @@ class ActivityStream
       endpoint.fragment = nil
       endpoint = endpoint.to_s
     else
-      wf, err = WebFinger.finger_account(actor)
+      wf, err = WebFinger.finger(actor)
       if !wf
         return nil, err
       end
