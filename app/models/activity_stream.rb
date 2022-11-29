@@ -55,7 +55,8 @@ class ActivityStream
     res = ActivityStream.sponge.fetch(endpoint, :get, nil, nil, {
       "Accept" => ACTIVITY_TYPE })
     if !res.ok?
-      return nil, "fetch of #{endpoint.inspect} failed: #{res.status}"
+      return nil, "fetch of #{endpoint.inspect} failed (#{res.status}): " <<
+        res.body.to_s
     end
 
     context = res.json["@context"]
