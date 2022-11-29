@@ -81,7 +81,7 @@ class FollowsController < ApplicationController
 
 private
   def find_items
-    @items = @user.send(@ar_collection).includes(:contact).order("id").
+    @items = @user.send(@ar_collection).includes(:contact).order("id DESC").
       limit(PER_PAGE).offset((@page - 1) * PER_PAGE)
   end
 end
