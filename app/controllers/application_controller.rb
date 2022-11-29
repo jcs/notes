@@ -10,6 +10,14 @@ class ApplicationController < App
   }
 
   before do
+    if request.env["CONTENT_TYPE"].to_s.match(/\Aapplication\/json(\z|;)/)
+      request.env["rack.input"].rewind
+      JSON.parse(request.env["rack.input"].read).each do |k,v|
+        request.update_param(k,v)
+        params[k] = v
+      end
+    end
+
     @user = User.includes(:contact).first!
   end
 
