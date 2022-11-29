@@ -21,7 +21,7 @@ class LocatorController < ApplicationController
     halt 400, "no URL to redirect to"
 
   rescue => e
-    App.logger.error "error locating #{params[:acct]}: #{e.message}"
+    request.log_extras[:error] = "error locating #{params[:acct]}: #{e.message}"
     halt 404, "error fingering account"
   end
 end
