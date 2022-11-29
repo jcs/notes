@@ -1,0 +1,36 @@
+<h1>OAuth Authorization</h1>
+
+<p>
+Authorize <strong><%= h @app.client_name %></strong> to access your account
+with these permissions?
+<ul>
+<% @app.scopes_h.keys.each do |p| %>
+  <li><strong><%= h p %></strong>
+<% end %>
+</ul>
+
+<h2>Login</h2>
+
+<p>
+<section class="bold-labels">
+  <% form_for @api_token, "/oauth/grant_authorization",
+  :method => :post do |f| %>
+    <%= f.hidden_field :client_id %>
+    <%= f.hidden_field :response_type %>
+    <%= f.hidden_field :scope %>
+    <%= f.hidden_field :redirect_uri %>
+
+    <div class="field-group">
+      <%= f.text_field_group "username" %>
+    </div>
+    <div class="field-group">
+      <%= f.password_field_group "password" %>
+    </div>
+
+    <div class="field-group">
+      <p>
+      <%= submit_tag "Grant Authorization" %>
+      </p>
+    </div>
+  <% end %>
+</section>

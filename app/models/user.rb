@@ -1,9 +1,14 @@
 class User < DBModel
-  has_many :followings
-  has_many :followers
-  has_one :contact
+  has_many :followings,
+    :dependent => :destroy
+  has_many :followers,
+    :dependent => :destroy
+  has_one :contact,
+    :dependent => :destroy
   has_many :notes,
     :through => :contact
+  has_many :api_tokens,
+    :dependent => :destroy
 
   has_secure_password
 
@@ -34,6 +39,11 @@ class User < DBModel
 
   def followed_by?(actor)
     self.followers.joins(:contact).where("contacts.actor = ?", actor).any?
+  end
+
+  def timeline
+    Note.where(:contact_id => self.followings.pluck(:contact_id)).
+      includes(:contact).order(:created_at)
   end
 
 private

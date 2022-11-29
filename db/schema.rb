@@ -10,7 +10,29 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_11_28_155635) do
+ActiveRecord::Schema.define(version: 2022_11_29_164541) do
+
+  create_table "api_apps", force: :cascade do |t|
+    t.string "client_name"
+    t.string "redirect_uri"
+    t.string "scopes"
+    t.string "website"
+    t.string "client_id"
+    t.string "client_secret"
+    t.string "vapid_key"
+    t.index ["client_id"], name: "index_api_apps_on_client_id", unique: true
+  end
+
+  create_table "api_tokens", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "api_app_id"
+    t.integer "user_id"
+    t.string "scope"
+    t.string "code"
+    t.string "access_token"
+    t.index ["access_token"], name: "index_api_tokens_on_access_token", unique: true
+  end
 
   create_table "attachment_blobs", force: :cascade do |t|
     t.integer "attachment_id"

@@ -82,9 +82,7 @@ class Note < DBModel
     end
 
     if to_delete.any?
-      dbnote.attachments.where(:id => to_delete.keys).each do |a|
-        a.destroy
-      end
+      dbnote.attachments.where(:id => to_delete.keys).destroy_all
     end
 
     to_fetch.each do |u,obj|
@@ -268,6 +266,39 @@ class Note < DBModel
       end
     end
     order
+  end
+
+  def timeline_object
+    {
+      "id" => self.id.to_s,
+      "created_at" => self.created_at.utc.iso8601,
+      "edited_at" => self.note_modified_at.try(:utc).try(:iso8601),
+      "in_reply_to_id" => self.parent_note_id.try(:to_s),
+      "in_reply_to_account_id" => self.parent_note_id.present? ?
+        self.parent_note.contact_id.to_s : nil,
+      "sensitive" => !!foreign_object["sensitive"],
+      "spoiler_text" => "",
+      "visibility" => "public",
+      "language" => "en",
+      "url" => self.public_id,
+      "uri" => self.public_id,
+      "replies_count" => self.reply_count,
+      "reblogs_count" => self.forward_count,
+      "favourites_count" => self.like_count,
+      #"favourited" => false,
+      #"reblogged" => false,
+      #"muted" => false,
+      #"bookmarked" => false,
+      "content" => self.note,
+      "reblog" => nil,
+      "media_attachments" => self.attachments.map(&:timeline_object),
+      "mentions" => [],
+      "tags" => [],
+      "emojis" => [],
+      "card" => nil,
+      "poll" => nil,
+      "account" => self.contact.timeline_object,
+    }
   end
 
   def unforward_by!(contact)

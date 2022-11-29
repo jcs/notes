@@ -114,16 +114,15 @@ class Attachment < DBModel
 
   def html
     if image?
-      "<a href=\"#{App.base_url}/attachments/#{id}\">" <<
-        "<img src=\"#{App.base_url}/attachments/#{id}\" " <<
+      "<a href=\"#{self.url}\">" <<
+        "<img src=\"#{self.url}\" " <<
         "intrinsicsize=\"#{self.width}x#{self.height}\"></a>"
     elsif video?
       "<video controls=1 preload=metadata " <<
         "intrinsicsize=\"#{self.width}x#{self.height}\">\n" <<
-        "<source src=\"#{App.base_url}/attachments/#{id}\" " <<
-        "type=\"#{self.type}\" />\n" <<
+        "<source src=\"#{self.url}\" type=\"#{self.type}\" />\n" <<
         "Your browser doesn't seem to support HTML video. " <<
-        "You can <a href=\"#{App.base_url}/attachments/#{id}\">" <<
+        "You can <a href=\"#{self.url}\">" <<
         "download the video</a> instead.\n" <<
       "</video>"
     else
@@ -133,6 +132,20 @@ class Attachment < DBModel
 
   def image?
     [ TYPES[:jpeg], TYPES[:png], TYPES[:gif] ].include?(self.type)
+  end
+
+  def timeline_object
+    {
+      "id" => self.id.to_s,
+      "type" => self.video? ? "video" : "image",
+      "url" => self.url,
+      "preview_url" => self.url,
+      "remote_url" => self.source,
+    }
+  end
+
+  def url
+    "#{App.base_url}/attachments/#{id}"
   end
 
   def video?

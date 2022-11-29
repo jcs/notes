@@ -1,46 +1,3 @@
-html, body, h1, h2, h3, h4, h5, input, textarea, header select {
-	font-family: sans-serif;
-	font-size: 11pt;
-}
-pre, code {
-	font-family: monospace;
-}
-h1, h2 {
-	font-size: 13pt;
-	font-weight: bold;
-}
-h1 code, h2 code {
-	font-size: 12pt;
-}
-
-body {
-	background-color: #fdfdf8;
-	line-height: 1.4em;
-	margin: 0 auto;
-	padding: 10px;
-	padding-top: 0;
-}
-
-footer {
-	color: #aaa;
-	font-size: 0.9em;
-	margin-bottom: 2em;
-	margin-top: 3em;
-	text-align: center;
-}
-footer a,
-footer a:visited {
-	color: gray;
-}
-
-div#sitewrapper {
-	margin: 0px auto;
-	position: relative;
-	padding: 0 5px;
-	width: 800px;
-}
-
-
 .notes_counters {
 	margin-bottom: 1em;
 }
@@ -48,7 +5,6 @@ div#sitewrapper {
 	color: #555;
 	text-decoration: none;
 }
-
 .follow_button {
 	background-color: #e6eae8;
 	border-radius: 10px;
@@ -71,40 +27,6 @@ div#sitewrapper {
 .follow_button > summary::marker,
 .follow_button > summary::-webkit-details-marker {
 	display: none;
-}
-
-.page_nav {
-	text-align: center;
-	margin-top: 3em;
-	color: #555;
-}
-.page_nav.top {
-	margin-top: 0;
-	margin-bottom: 1em;
-}
-.page_nav .page {
-	border: 1px solid #ddd;
-	display: inline-block;
-	padding: 5px 10px;
-	margin-left: 0.5em;
-	text-align: center;
-	border-radius: 8px;
-}
-.page_nav .page.ellipses {
-	border-color: transparent;
-}
-
-.page_nav .page.cur_page {
-	background-color: #f7f7f2;
-	font-weight: bold;
-	color: #555;
-}
-.page_nav .page.ellipses {
-	border-color: transparent;
-}
-.page_nav.top {
-	margin-top: 0;
-	margin-bottom: 1em;
 }
 
 h1.note a {
@@ -144,13 +66,17 @@ article.note:hover {
 .note .realname {
 	font-weight: bold;
 }
-.note .realname a,
-.note .username a {
+.note .realname a {
 	color: #555;
 	text-decoration: none;
 }
 .note .realname a:hover {
 	text-decoration: underline;
+}
+
+.note .username a {
+	color: gray;
+	text-decoration: none;
 }
 
 .note .date a {
@@ -162,10 +88,15 @@ article.note:hover {
 }
 .note .note_text {
 	margin-top: 0.3em;
+	word-break: break-word;
 }
 
 .note .note_text p {
 	margin-bottom: 0;
+}
+
+.note .full_date {
+	display: none;
 }
 
 .note .note_attachments {
@@ -237,9 +168,6 @@ article.note:hover {
 .note_vanity_likes svg {
     margin-top: -1px;
 }
-.note .full_date {
-	display: none;
-}
 
 .note.dedicated .dash {
 	display: none;
@@ -267,7 +195,9 @@ article.note:hover {
 	color: gray;
 	text-decoration: none;
 }
-
+.note.dedicated .dash {
+    display: none;
+}
 .note.dedicated .note_vanity {
     font-size: 11pt;
 }
@@ -284,6 +214,7 @@ article.note:hover {
 	float: left;
 	padding-right: 1em;
 }
+
 .note_contact .realname {
     font-weight: bold;
     display: block;
@@ -295,4 +226,100 @@ article.note:hover {
 }
 .note_contact .realname a:hover {
     text-decoration: underline;
+}
+
+
+/* forms */
+fieldset {
+	border: 0;
+	margin-left: auto;
+	margin-right: auto;
+	padding: 0;
+}
+
+fieldset legend {
+	font-weight: bold;
+	padding-left: 0;
+	margin-bottom: 0.5em;
+}
+
+input.link {
+	background: none;
+	border: none;
+	cursor: pointer;
+	font-weight: bold;
+	margin: 0;
+	padding: 0;
+}
+
+.field-group {
+	line-height: 2.5em;
+	margin-bottom: 0.5em;
+	vertical-align: top;
+}
+
+.field-group label {
+	display: inline-block;
+	vertical-align: top;
+	width: 140px;
+}
+
+.bold-labels .field-group label {
+	font-weight: bold;
+}
+
+.help-inline {
+	padding-left: 0.5em;
+}
+
+.field-group button,
+.field-group input,
+.field-group select,
+.field-group textarea {
+	width: 160px;
+	vertical-align: top;
+}
+.field-group button,
+.field-group input[type="submit"] {
+	width: auto;
+}
+
+.field-group button.wide,
+.field-group input.wide,
+.field-group select.wide,
+.field-group textarea.wide {
+	min-width: 240px;
+}
+
+.field-group button.wide2,
+.field-group input.wide2,
+.field-group select.wide2,
+.field-group textarea.wide2 {
+	min-width: 320px;
+}
+
+.field-group button.wide3,
+.field-group input.wide3,
+.field-group select.wide3,
+.field-group textarea.wide3 {
+	min-width: 480px;
+}
+
+.with-errors input[type="text"],
+.with-errors input[type="text"]:focus,
+.with-errors input[type="email"],
+.with-errors input[type="email"]:focus,
+.with-errors input[type="password"],
+.with-errors input[type="password"]:focus,
+.with-errors textarea,
+.with-errors select {
+	border-color: #c43c35;
+}
+.with-errors .help-inline {
+	color: #c43c35;
+}
+
+fieldset .error_hint {
+	margin-left: 1em;
+	color: #c43c35;
 }

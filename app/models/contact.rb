@@ -112,8 +112,36 @@ class Contact < DBModel
     Contact.refresh_for_actor(self.actor, nil, include_avatar)
   end
 
+  def timeline_object
+    {
+      "id" => self.id.to_s,
+      "username" => self.username,
+      "acct" => self.address,
+      "display_name" => self.realname,
+      "locked" => false,
+      "bot" => false,
+      "note" => self.about,
+      "created_at" => self.created_at.utc.iso8601,
+      "url" => self.url,
+      "avatar" => self.avatar_url,
+      "avatar_static" => self.avatar_url,
+      "header" => self.avatar_url,
+      "header_static" => self.avatar_url,
+      "followers_count" => 0,
+      "following_count" => 0,
+      "statuses_count" => 0,
+      "last_status_at" => nil,
+      "emojis" => [],
+      "fields" => [],
+    }
+  end
+
   def url_or_locate_url
     self.url.to_s == "" ?
       "#{LocatorController.path}/#{CGI.escape(self.address)}" : self.url
+  end
+
+  def username
+    self.address.split("@").first
   end
 end

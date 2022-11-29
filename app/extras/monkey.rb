@@ -4,6 +4,22 @@ class Array
   end
 end
 
+module SecureRandom
+  # more entropy than .hex, avoids [-=] in .base64
+  def self.safe(len)
+    out = ""
+    while out.length < len
+      out += SecureRandom.base64(len * 2).split("").select{|a|
+        ('A' .. 'Z').include?(a) ||
+        ('a' .. 'z').include?(a) ||
+        ('0' .. '9').include?(a)
+      }.join
+    end
+
+    out[0, len]
+  end
+end
+
 class String
   def escape
     CGI::escapeHTML(self.to_s).gsub("'", "&#039;")
