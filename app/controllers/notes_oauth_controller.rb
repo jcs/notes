@@ -46,5 +46,25 @@ class NotesOauthController < ApplicationController
       "created_at" => token.created_at.to_i,
     })
   end
+
+  post "/revoke" do
+    app = ApiApp.where(:client_id => params[:client_id]).first
+    if !app
+      halt 400, "invalid client_id"
+    end
+
+    if app.client_secret != params[:client_secret]
+      halt 400, "invalid client_secret"
+    end
+
+    token = app.api_tokens.where(:access_token => params[:token]).first
+    if !token
+      halt 400, "invalid token"
+    end
+
+    token.destroy
+
+    json({})
+  end
 end
 
