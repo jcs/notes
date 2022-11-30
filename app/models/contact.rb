@@ -53,6 +53,7 @@ class Contact < DBModel
       contact.address = "#{person_ld["preferredUsername"]}@#{domain}"
       contact.key_id = person_ld["publicKey"]["id"]
       contact.key_pem = person_ld["publicKey"]["publicKeyPem"]
+      contact.foreign_object_json = person_ld.to_json
       contact.save!
     rescue ActiveRecord::RecordNotUnique => e
       if retried
@@ -98,6 +99,10 @@ class Contact < DBModel
 
   def avatar_url
     "#{App.base_url}/avatars/#{self.address}"
+  end
+
+  def foreign_object
+    @foreign_object ||= JSON.parse(self.foreign_object_json)
   end
 
   def inbox_uri

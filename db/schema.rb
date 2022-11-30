@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_11_29_164541) do
+ActiveRecord::Schema.define(version: 2022_11_29_220443) do
 
   create_table "api_apps", force: :cascade do |t|
     t.string "client_name"
@@ -64,6 +64,7 @@ ActiveRecord::Schema.define(version: 2022_11_29_164541) do
     t.text "about"
     t.integer "avatar_attachment_id"
     t.integer "user_id"
+    t.text "foreign_object_json"
     t.index ["actor"], name: "index_contacts_on_actor", unique: true
     t.index ["address"], name: "index_contacts_on_address", unique: true
     t.index ["key_id"], name: "index_contacts_on_key_id", unique: true
