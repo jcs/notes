@@ -56,6 +56,16 @@ class Note < DBModel
     dbnote.conversation = note["conversation"]
     dbnote.note = note["content"]
 
+    dbnote.is_public = (note["to"].is_a?(Array) ? note["to"].to_s :
+      [ note["to"] ]).include?(ActivityStream::PUBLIC_URI)
+    if dbnote.is_public
+      if note["inReplyTo"].present? &&
+      !note["inReplyTo"].starts_with?(App.base_url)
+        # TODO: check for mentions of us
+        dbnote.is_public = false
+      end
+    end
+
     if note["inReplyTo"].present? &&
     (parent = Note.where(:public_id => note["inReplyTo"]).first)
       dbnote.parent_note_id = parent.id

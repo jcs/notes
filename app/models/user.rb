@@ -43,7 +43,7 @@ class User < DBModel
 
   def timeline
     Note.where(:contact_id => self.followings.pluck(:contact_id)).
-      includes(:contact).order(:created_at)
+      includes(:contact).where(:is_public => true)
   end
 
 private

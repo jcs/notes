@@ -9,12 +9,13 @@ class APITimelinesController < ApplicationController
   get "/home" do
     find_api_token_user
 
-    response["link"] = [
-      "<#{App.base_url}/api/v1/timelines/home?max_id=1>; rel=\"next\"",
-      "<#{App.base_url}/api/v1/timelines/home?min_id=1>; rel=\"prev\"",
-    ].join(", ")
+    tl = @api_token.user.timeline.order("created_at DESC").limit(20)
 
-    @api_token.user.timeline.limit(20).map{|n| n.timeline_object }.to_json
+    if params[:max_id]
+      tl = tl.where("id < ?", params[:max_id])
+    end
+
+    tl.map{|n| n.timeline_object }.to_json
   end
 
   get "/public" do

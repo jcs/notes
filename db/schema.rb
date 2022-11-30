@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_11_29_220443) do
+ActiveRecord::Schema.define(version: 2022_11_30_052907) do
 
   create_table "api_apps", force: :cascade do |t|
     t.string "client_name"
@@ -118,9 +118,11 @@ ActiveRecord::Schema.define(version: 2022_11_29_220443) do
     t.text "foreign_object_json"
     t.datetime "note_modified_at"
     t.string "public_id"
+    t.boolean "is_public", default: false
     t.index ["contact_id"], name: "index_notes_on_contact_id"
     t.index ["conversation"], name: "index_notes_on_conversation"
     t.index ["import_id"], name: "index_notes_on_import_id", unique: true
+    t.index ["is_public"], name: "index_notes_on_is_public"
     t.index ["parent_note_id"], name: "index_notes_on_parent_note_id"
     t.index ["public_id"], name: "index_notes_on_public_id", unique: true
   end
