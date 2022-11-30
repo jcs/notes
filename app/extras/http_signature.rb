@@ -1,12 +1,12 @@
 class HTTPSignature
   EXPIRATION_WINDOW = 12.hours
 
-  def self.sign_headers(uri, content, key_id, private_key)
+  def self.sign_headers(uri, method, content, key_id, private_key)
     digest = "SHA-256=" + Base64.strict_encode64(
       OpenSSL::Digest::SHA256.new(content).digest)
 
     date = Time.now.utc.httpdate
-    data = "(request-target): post #{uri.path}\n" +
+    data = "(request-target): #{method.to_s.downcase} #{uri.path}\n" +
       "host: #{uri.host}\n" +
       "date: #{date}\n" +
       "digest: #{digest}"

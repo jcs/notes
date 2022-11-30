@@ -33,7 +33,7 @@ while true do
         )
       end
 
-      qe.increment!(:tries)
+      qe.fail!
       sleep 5
     end
   end

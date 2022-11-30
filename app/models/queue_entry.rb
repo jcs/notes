@@ -11,8 +11,13 @@ class QueueEntry < DBModel
       Contact.refresh_for_queue_entry(qe)
     },
     :signed_post => proc{|qe|
-      ActivityStream.signed_post_with_key(qe.contact.inbox, qe.object_json,
-        qe.user.activitystream_key_id, qe.user.private_key)
+      begin
+        ActivityStream.fetch(uri: qe.contact.inbox, method: :post,
+          body: qe.object_json).ok?
+      rescue => e
+        App.logger.error "failed POSTing to #{qe.contact.inbox}: #{e.message}"
+        return false
+      end
     },
   }
 
@@ -38,7 +43,10 @@ class QueueEntry < DBModel
     end
 
     App.logger.error "[q#{self.id}] failed #{self.action}: #{err}"
+    fail!
+  end
 
+  def fail!
     if self.tries >= MAX_TRIES
       App.logger.error "[q#{self.id}] too many retries, giving up"
       self.destroy

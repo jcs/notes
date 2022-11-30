@@ -37,8 +37,8 @@ module UserActivityStream
       "published" => Time.now.utc.iso8601,
     }
 
-    ActivityStream.signed_post_with_key(ld["inbox"], msg.to_json,
-      self.activitystream_key_id, self.private_key)
+    ActivityStream.fetch(uri: ld["inbox"], method: :post, body: msg.to_json,
+      signer: self)
 
     return true, nil
   end
@@ -57,8 +57,8 @@ module UserActivityStream
       "object" => contact.actor,
     }.to_json
 
-    ActivityStream.signed_post_with_key(contact.inbox, jmsg,
-      self.activitystream_key_id, self.private_key)
+    ActivityStream.fetch(uri: contact.inbox, method: :post, body: jmsg,
+      signer: self)
 
     following = nil
     begin
@@ -123,10 +123,10 @@ module UserActivityStream
 
     self.followers.includes(:contact).each do |follower|
       begin
-        ret, err = ActivityStream.signed_post_with_key(follower.contact.inbox,
-          msg, self.activitystream_key_id, self.private_key)
-        if !ret
-          raise err
+        res = ActivityStream.fetch(uri: follower.contact.inbox, method: :post,
+          body: msg, signer: self)
+        if !res.ok?
+          raise "request failed: #{res.status}"
         end
       rescue => e
         App.logger.error "failed updating #{follower.contact.actor}: " <<
@@ -165,8 +165,8 @@ module UserActivityStream
       })
     end
 
-    ActivityStream.signed_post_with_key(ld["inbox"], msg.to_json,
-      self.activitystream_key_id, self.private_key)
+    ActivityStream.fetch(uri: ld["inbox"], method: :post, body: msg.to_json,
+      signer: self)
 
     # TODO: only if that was accepted
     f = self.followings.joins(:contact).where("contacts.actor = ?", actor).first
@@ -218,10 +218,5 @@ module UserActivityStream
         },
       ],
     }
-  end
-
-  def activitystream_signed_post_to_contact(contact, json)
-    ActivityStream.signed_post_with_key(contact.inbox_uri, json,
-      self.activitystream_key_id, self.private_key)
   end
 end

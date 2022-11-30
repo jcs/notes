@@ -10,8 +10,8 @@ class WebFinger
     url = nil
 
     begin
-      res = ActivityStream.sponge.fetch(
-        "https://#{parts[:domain]}/.well-known/host-meta", :get)
+      res = ActivityStream.fetch(uri:
+        "https://#{parts[:domain]}/.well-known/host-meta", method: :get)
       if res.ok?
         doc = Nokogiri::XML(res.body)
         template = doc.css("Link[rel='lrdd']")[0].attributes["template"].value
@@ -37,7 +37,7 @@ class WebFinger
     end
 
     begin
-      res = ActivityStream.sponge.fetch(url, :get)
+      res = ActivityStream.fetch(uri: url, method: :get)
       if !res.ok?
         return nil, "bad status #{res.status}"
       end
@@ -45,7 +45,7 @@ class WebFinger
       return res.json, nil
 
     rescue => e
-      return nil, "failed webfingering #{uri.inspect}: #{e.message}"
+      return nil, "failed webfingering #{url.inspect}: #{e.message}"
     end
   end
 

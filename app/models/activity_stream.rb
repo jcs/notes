@@ -9,19 +9,57 @@ class ActivityStream
 
   cattr_accessor :debug
 
-  def self.sponge
-    @@sponge ||= Sponge.new
-    @@sponge.debug = ActivityStream.debug
-    @@sponge.user_agent = "#{App.domain}-notes/1.0"
-    @@sponge.keep_alive = true
-    @@sponge
+  def self.fetch(uri:, method:, post_fields: nil, body: nil,
+  headers: {}, attachments: {}, signer: nil, limit: 10)
+    if !uri.is_a?(URI)
+      uri = URI.parse(uri)
+    end
+
+    if !signer
+      signer = ActivityStream.request_signer
+    end
+
+    hs = HTTPSignature.sign_headers(uri, method, body.to_s,
+      signer.contact.key_id, signer.private_key)
+
+    if ActivityStream.debug
+      App.logger.info "doing signed #{method} to #{uri}"
+    end
+
+    # manually follow redirections because we have to re-sign each request
+    self.sponge.follow_redirection = false
+    self.sponge.debug = ActivityStream.debug
+
+    res = self.sponge.fetch(uri, method, post_fields, body, headers.merge(hs),
+      attachments, limit)
+
+    if (300 .. 399).include?(res.status) && res.headers["Location"].present?
+      # follow
+      newuri = URI.parse(res.headers["Location"])
+      if !newuri.host
+        # relative path
+        newuri.host = uri.host
+        newuri.scheme = uri.scheme
+        newuri.port = uri.port
+        newuri.path = "/#{newuri.path}"
+      end
+      if ActivityStream.debug
+        App.logger.info "following redirection to #{newuri.to_s}"
+      end
+
+      return self.fetch(uri: newuri, method: method, post_fields: post_fields,
+        body: body, headers: headers, attachments: attachments, signer: signer,
+        limit: limit - 1)
+    end
+
+    return res
   end
 
   def self.get_json(url)
-    res = ActivityStream.sponge.fetch(url, :get, nil, nil, {
+    res = ActivityStream.fetch(uri: url, method: :get, headers: {
       "Accept" => ACTIVITY_TYPE })
     if !res.ok?
-      return nil, "failed fetching #{url}: #{res.status}"
+      return nil, "failed fetching #{url} (#{res.status}): #{res.body.to_s}"
     end
 
     return res.json, nil
@@ -52,14 +90,12 @@ class ActivityStream
       end
     end
 
-    res = ActivityStream.sponge.fetch(endpoint, :get, nil, nil, {
-      "Accept" => ACTIVITY_TYPE })
-    if !res.ok?
-      return nil, "fetch of #{endpoint.inspect} failed (#{res.status}): " <<
-        res.body.to_s
+    json, err = ActivityStream.get_json(endpoint)
+    if json == nil
+      return nil, err
     end
 
-    context = res.json["@context"]
+    context = json["@context"]
     if !context.is_a?(Array)
       context = [ context ]
     end
@@ -68,12 +104,12 @@ class ActivityStream
       return nil, "invalid @context"
     end
 
-    if !res.json["publicKey"] || !res.json["publicKey"]["id"] ||
-    !res.json["publicKey"]["publicKeyPem"].to_s.match(/BEGIN PUBLIC KEY/)
+    if !json["publicKey"] || !json["publicKey"]["id"] ||
+    !json["publicKey"]["publicKeyPem"].to_s.match(/BEGIN PUBLIC KEY/)
       return nil, "no publicKey"
     end
 
-    return res.json, nil
+    return json, nil
 
   rescue => e
     return nil, "failed fetching endpoint for #{actor.inspect}: #{e.message}"
@@ -83,26 +119,8 @@ class ActivityStream
     ActivityStream::ACTIVITY_TYPES.include?(request.accept[0].to_s)
   end
 
-  def self.signed_post_with_key(url, json, key_id, private_key)
-    if !url.is_a?(URI)
-      url = URI.parse(url)
-    end
-
-    hs = HTTPSignature.sign_headers(url, json, key_id, private_key)
-
-    if ActivityStream.debug
-      App.logger.info "doing signed POST to #{url} with #{key_id}: #{json}"
-    end
-
-    res = ActivityStream.sponge.fetch(url, :post, nil, json, hs.merge({
-      "Content-Type" => ACTIVITY_TYPE
-    }))
-    if !res.ok?
-      return false, "failed with status #{res.status}: " <<
-        res.body.to_s[0, 100]
-    end
-
-    return true, nil
+  def self.request_signer
+    @@signer ||= User.includes(:contact).first
   end
 
   def self.verified_message_from(request)
@@ -156,6 +174,15 @@ class ActivityStream
 
   rescue => e
     return nil, "failed verifying HTTP signature: #{e.message}"
+  end
+
+private
+  def self.sponge
+    @@sponge ||= Sponge.new
+    @@sponge.debug = ActivityStream.debug
+    @@sponge.user_agent = "#{App.domain}-notes/1.0"
+    @@sponge.keep_alive = true
+    @@sponge
   end
 end
 
