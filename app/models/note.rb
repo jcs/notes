@@ -165,6 +165,10 @@ class Note < DBModel
     end
   end
 
+  def authoritative_url
+    self.local? ? self.url : self.public_id
+  end
+
   def foreign_object
     @foreign_object ||= JSON.parse(self.foreign_object_json)
   end

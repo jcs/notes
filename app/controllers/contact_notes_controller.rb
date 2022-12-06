@@ -2,11 +2,13 @@ class ContactNotesController < ApplicationController
   self.path = "#{App.base_path}/from"
 
   PER_PAGE = 20
+  EVERYONE = "everyone"
+  TIMELINE = "timeline"
 
   get "/:address" do
     find_contact
     find_pages
-    @notes = @contact.notes.order("id DESC").limit(PER_PAGE)
+    @notes = @scope.order("id DESC").limit(PER_PAGE)
     @page = 1
     erb :index
   end
@@ -20,7 +22,7 @@ class ContactNotesController < ApplicationController
       halt 404, "no such page"
     end
 
-    @notes = @contact.notes.order("id DESC").limit(PER_PAGE).
+    @notes = @scope.order("id DESC").limit(PER_PAGE).
       offset((@page - 1) * PER_PAGE)
     erb :index
   end
@@ -40,23 +42,34 @@ class ContactNotesController < ApplicationController
 
 private
   def find_contact
-    @contact = Contact.where(:address => params[:address]).first
-    if !@contact
-      halt 404, "no such contact"
+    case params[:address]
+    when TIMELINE
+      @scope = @user.timeline.order("created_at DESC")
+      @title = "Notes from timeline"
+    when EVERYONE
+      @scope = Note.all.order("created_at DESC")
+      @title = "Notes from everyone"
+    else
+      @contact = Contact.where(:address => params[:address]).first
+      if !@contact
+        halt 404, "no such contact"
+      end
+      @scope = @contact.notes
+      @title = "Notes from #{@contact.address}"
     end
   end
 
   def find_pages
-    @count = @contact.notes.count
+    @count = @scope.count
     @pages = (@count.to_f / PER_PAGE.to_f).ceil
-    @base_url = @user.activitystream_url
+    @base_url = "#{App.base_url}/from/#{params[:address]}"
   end
 
   def find_note
     note_id = params[:id]
     unless note_id then halt 404, "no note id" end
 
-    @note = @contact.notes.where(:id => note_id).first
+    @note = @scope.where(:id => note_id).first
     unless @note then halt 404, "no such note" end
   end
 end

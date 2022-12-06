@@ -109,7 +109,14 @@ class InboxController < ApplicationController
           request.log_extras[:result] = "updated note"
         end
       when "Person"
-        Contact.queue_refresh_for_actor!(asvm.contact.actor)
+        c = Contact.where(:actor => asvm.contact.actor).first
+        if c && c.local?
+          request.log_extras[:error] = "ignoring Update for local contact"
+        else
+          Contact.queue_refresh_for_actor!(asvm.contact.actor)
+        end
+      when "Question"
+        # ignore
       else
         request.log_extras[:error] = "unsupported Update for #{type}"
       end

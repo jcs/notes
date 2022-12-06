@@ -37,9 +37,9 @@ class Contact < DBModel
     begin
       contact = Contact.where(:actor => person_ld["id"]).first
       if contact
-        if contact.user_id
+        if contact.local?
           # refuse refreshing
-          return true, nil
+          return contact, nil
         end
       else
         contact = Contact.new
@@ -70,8 +70,7 @@ class Contact < DBModel
           if contact.avatar
             contact.avatar.destroy
           end
-          av.save!
-          contact.avatar_attachment_id = av.id
+          contact.avatar = av
           contact.save!
         end
       elsif contact.avatar

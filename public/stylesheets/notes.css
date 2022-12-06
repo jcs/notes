@@ -10,7 +10,8 @@
 	border-radius: 10px;
 	border: 1px solid #cad3cf;
 	cursor: pointer;
-	float: right;
+	position: absolute;
+	right: 0;
 	max-width: 50%;
 	padding: 0.35em 0.75em 0.20em 0.75em;
 }
@@ -111,6 +112,7 @@ article.note:hover {
 	width: 141px;
 	height: 141px;
 }
+.note .note_text img,
 .note .note_attachments_count_1 .note_attachment img {
 	object-fit: contain;
 	object-position: 0 0;

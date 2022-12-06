@@ -8,15 +8,23 @@ class QueueEntry < DBModel
       Attachment.fetch_for_queue_entry(qe)
     },
     :contact_refresh => proc{|qe|
-      Contact.refresh_for_queue_entry(qe)
+      contact, err = Contact.refresh_for_queue_entry(qe)
+      if contact
+        App.logger.info "[q#{qe.id}] [c#{contact.id}] refreshed for " <<
+          "#{contact.actor}"
+      else
+        App.logger.error "[q#{qe.id}] error refreshing: #{err}"
+      end
     },
     :signed_post => proc{|qe|
       begin
+        App.logger.info "[q#{qe.id}] [c#{qe.contact.id}] doing signed POST " <<
+          "to #{qe.contact.inbox}"
         ActivityStream.fetch(uri: qe.contact.inbox, method: :post,
           body: qe.object_json).ok?
       rescue => e
         App.logger.error "failed POSTing to #{qe.contact.inbox}: #{e.message}"
-        return false
+        false
       end
     },
   }

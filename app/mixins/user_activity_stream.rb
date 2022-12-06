@@ -44,7 +44,7 @@ module UserActivityStream
   end
 
   def activitystream_follow!(actor)
-    contact, err = Contact.refresh_for_actor(actor)
+    contact, err = Contact.refresh_for_actor(actor, nil, true)
     if !contact
       return nil, err
     end
@@ -122,16 +122,12 @@ module UserActivityStream
     }.to_json
 
     self.followers.includes(:contact).each do |follower|
-      begin
-        res = ActivityStream.fetch(uri: follower.contact.inbox, method: :post,
-          body: msg, signer: self)
-        if !res.ok?
-          raise "request failed: #{res.status}"
-        end
-      rescue => e
-        App.logger.error "failed updating #{follower.contact.actor}: " <<
-          "#{e.message}"
-      end
+      q = QueueEntry.new
+      q.action = :signed_post
+      q.user_id = self.id
+      q.contact_id = follower.contact_id
+      q.object_json = msg
+      q.save!
     end
 
     return true, nil

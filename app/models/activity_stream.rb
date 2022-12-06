@@ -146,13 +146,13 @@ class ActivityStream
       # otherwise we'll have to queue it up and wait for a retry of this
       # request
       begin
-        Timeout.timeout(1) do
+        Timeout.timeout(1.5) do
           Contact.refresh_for_actor(comps["keyId"], nil, false)
         end
       rescue Timeout::Error
       end
 
-      # still schedule a full refresh of this actor to fetch their avatar
+      # schedule a full refresh of this actor to fetch their avatar
       Contact.queue_refresh_for_actor!(comps["keyId"])
 
       cont = Contact.where(:key_id => comps["keyId"]).first
@@ -167,7 +167,30 @@ class ActivityStream
     end
 
     if js["actor"] != cont.actor
-      return nil, "LD actor #{js["actor"].inspect} != #{cont.actor}"
+      ocont = Contact.where(:actor => js["actor"]).first
+      if !ocont
+        begin
+          Timeout.timeout(1.5) do
+            Contact.refresh_for_actor(js["actor"], nil, false)
+          end
+        rescue Timeout::Error
+        end
+
+        # schedule a full refresh of this actor to fetch their avatar
+        Contact.queue_refresh_for_actor!(js["actor"])
+
+        ocont = Contact.where(:actor => js["actor"]).first
+      end
+
+      if !ocont
+        return nil, "LD actor #{js["actor"].inspect} != #{cont.actor}"
+      end
+
+      # TODO: we need to verify the in-band signature for this forwarded
+      # message/reply:
+      # https://gist.github.com/marnanel/ba6cba944d1f12d705891b1f7a7808d6
+      # for now, just assume everyone is being nice
+      cont = ocont
     end
 
     return ActivityStreamVerifiedMessage.new(cont, js), nil
