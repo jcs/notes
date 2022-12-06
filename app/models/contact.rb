@@ -124,6 +124,23 @@ class Contact < DBModel
     Contact.refresh_for_actor(self.actor, nil, include_avatar)
   end
 
+  def relationship_object_with(user)
+    {
+      "id" => self.id,
+      "following" => user.followers.where(:contact_id => self.id).any?,
+      "showing_reblogs" => true,
+      "notifying" => false,
+      "followed_by" => user.followings.where(:contact_id => self.id).any?,
+      "blocking" => false,
+      "blocked_by" => false,
+      "muting" => false,
+      "muting_notifications" => false,
+      "requested" => false,
+      "domain_blocking" => false,
+      "endorsed" => false,
+    }
+  end
+
   def timeline_object
     {
       "id" => self.id.to_s,
@@ -139,10 +156,11 @@ class Contact < DBModel
       "avatar_static" => self.avatar_url,
       "header" => self.avatar_url,
       "header_static" => self.avatar_url,
-      "followers_count" => 0,
-      "following_count" => 0,
-      "statuses_count" => 0,
-      "last_status_at" => nil,
+      "followers_count" => self.local? ? self.user.followers.count : 0,
+      "following_count" => self.local? ? self.user.followings.count : 0,
+      "statuses_count" => self.local? ? self.notes.count : 0,
+      "last_status_at" => self.local? ?
+        self.notes.last.try(:created_at).try(:utc).try(:iso8601) : nil,
       "emojis" => [],
       "fields" => [],
     }

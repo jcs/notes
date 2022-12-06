@@ -170,7 +170,7 @@ class Note < DBModel
   end
 
   def foreign_object
-    @foreign_object ||= JSON.parse(self.foreign_object_json)
+    @foreign_object ||= JSON.parse(self.foreign_object_json || "{}")
   end
 
   def forward_by!(contact)
@@ -236,7 +236,7 @@ class Note < DBModel
     order
   end
 
-  def timeline_object
+  def timeline_object_for(user)
     {
       "id" => self.id.to_s,
       "created_at" => self.created_at.utc.iso8601,
@@ -253,7 +253,7 @@ class Note < DBModel
       "replies_count" => self.reply_count,
       "reblogs_count" => self.forward_count,
       "favourites_count" => self.like_count,
-      #"favourited" => false,
+      "favourited" => user.likes.where(:note_id => self.id).any?,
       #"reblogged" => false,
       #"muted" => false,
       #"bookmarked" => false,
@@ -265,6 +265,7 @@ class Note < DBModel
       "emojis" => [],
       "card" => nil,
       "poll" => nil,
+      "pinned" => false,
       "account" => self.contact.timeline_object,
     }
   end

@@ -9,6 +9,8 @@ class User < DBModel
     :through => :contact
   has_many :api_tokens,
     :dependent => :destroy
+  has_many :likes,
+    :through => :contact
 
   has_secure_password
 
@@ -39,6 +41,28 @@ class User < DBModel
 
   def followed_by?(actor)
     self.followers.joins(:contact).where("contacts.actor = ?", actor).any?
+  end
+
+  def marker_for(what)
+    ks = Keystore.get("user:#{self.id}:marker:#{what}")
+    if !ks
+      return nil
+    end
+    JSON.parse(ks)
+  end
+
+  def store_marker_for(what, value)
+    old = marker_for(what)
+    version = 1
+    if old
+      version = old["version"] + 1
+    end
+    ks = Keystore.put("user:#{self.id}:marker:#{what}",
+      {
+        "last_read_id" => value,
+        "version" => version,
+        "updated_at" => Time.now.utc.iso8601,
+      }.to_json)
   end
 
   def timeline

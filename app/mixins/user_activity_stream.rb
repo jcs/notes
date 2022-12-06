@@ -43,6 +43,38 @@ module UserActivityStream
     return true, nil
   end
 
+  def activitystream_dislike_note!(note)
+    like = self.likes.where(:note_id => note.id).first
+    if !like
+      return
+    end
+
+    like.destroy!
+
+    msg = {
+      "@context" => ActivityStream::NS,
+      "id" => "#{self.activitystream_actor}#like-#{Time.now.to_i}",
+      "type" => "Undo",
+      "actor" => self.activitystream_actor,
+      "to" => [ ActivityStream::PUBLIC_URI ],
+      "object" => {
+        "@context" => ActivityStream::NS,
+        "id" => note.public_id,
+        "type" => "Like",
+      },
+      "published" => self.updated_at.utc.iso8601,
+    }.to_json
+
+    q = QueueEntry.new
+    q.action = :signed_post
+    q.user_id = self.id
+    q.contact_id = note.contact_id
+    q.object_json = msg
+    q.save!
+
+    return true, nil
+  end
+
   def activitystream_follow!(actor)
     contact, err = Contact.refresh_for_actor(actor, nil, true)
     if !contact
@@ -106,6 +138,38 @@ module UserActivityStream
       App.logger.info "#{self.username} gained follower #{contact.actor}"
     rescue ActiveRecord::RecordNotUnique => e
     end
+
+    return true, nil
+  end
+
+  def activitystream_like_note!(note)
+    if self.likes.where(:note_id => note.id).any?
+      return
+    end
+
+    l = note.likes.build
+    l.contact_id = self.contact.id
+    l.save!
+
+    msg = {
+      "@context" => ActivityStream::NS,
+      "id" => "#{self.activitystream_actor}#like-#{Time.now.to_i}",
+      "type" => "Like",
+      "actor" => self.activitystream_actor,
+      "to" => [ ActivityStream::PUBLIC_URI ],
+      "object" => {
+        "@context" => ActivityStream::NS,
+        "id" => note.public_id,
+      },
+      "published" => self.updated_at.utc.iso8601,
+    }.to_json
+
+    q = QueueEntry.new
+    q.action = :signed_post
+    q.user_id = self.id
+    q.contact_id = note.contact_id
+    q.object_json = msg
+    q.save!
 
     return true, nil
   end

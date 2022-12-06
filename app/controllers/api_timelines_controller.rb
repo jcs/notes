@@ -15,7 +15,7 @@ class APITimelinesController < ApplicationController
       tl = tl.where("id < ?", params[:max_id])
     end
 
-    tl.map{|n| n.timeline_object }.to_json
+    tl.map{|n| n.timeline_object_for(@api_token.user) }.to_json
   end
 
   get "/public" do
