@@ -109,6 +109,14 @@ class Contact < DBModel
     @_inbox_uri ||= URI.parse(self.inbox)
   end
 
+  def linkified_about(opts = {})
+    HTMLSanitizer.linkify(about, opts)
+  end
+
+  def local?
+    self.user_id.present?
+  end
+
   def realname_or_address
     self.realname.to_s == "" ? self.address : self.realname
   end

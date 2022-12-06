@@ -1,10 +1,4 @@
 class Note < DBModel
-  # include @...@...
-  LINKIFY_RE = %r{
-      (?: ((?:ed2k|ftp|http|https|irc|mailto|news|gopher|nntp|telnet|webcal|xmpp|callto|feed|svn|urn|aim|rsync|tag|ssh|sftp|rtsp|afs|file):)// | www\.\w |@([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.)
-      [^\s<\u00A0'",]+
-    }ix
-
   belongs_to :contact
   belongs_to :parent_note,
     :class_name => "Note"
@@ -206,51 +200,11 @@ class Note < DBModel
   end
 
   def linkified_note(opts = {})
-    if !opts[:target]
-      opts[:target] = "_blank"
-    end
-
-    html = "<p>" << note.strip.gsub(/\n\n+/, "</p><p>").gsub("\n", "<br>") <<
-      "</p>"
-    html.gsub!(/<p>(<br>)*<\/p>/, "")
-
-    doc = Nokogiri::HTML(html)
-    doc.xpath("//text()").each do |node|
-      if node.parent && node.parent.name.downcase == "a"
-        next
-      end
-
-      text = node.content
-      text.gsub!(LINKIFY_RE) do |link|
-        title = link.dup
-
-        if m = link.match(/^@([^@]+)@([^@]+)/)
-          if m[2] == "twitter.com"
-            link = "https://twitter.com/#{m[1]}"
-          else
-            link = "#{App.base_url}/locate/#{CGI.escape(m[1] + "@" + m[2])}"
-          end
-        end
-
-        "<a href=\"" << CGI.escapeHTML(link) << "\">" <<
-          CGI.escapeHTML(title) << "</a>"
-      end
-
-      node.replace text
-    end
-
-    Sanitize.fragment(doc.xpath("//body").inner_html,
-      Sanitize::Config.merge(Sanitize::Config::RELAXED,
-      :add_attributes => {
-        "a" => {
-          "rel" => "nofollow noreferrer",
-          "target" => opts[:target],
-        }
-      }))
+    HTMLSanitizer.linkify(note, opts)
   end
 
   def local?
-    !!self.contact.user
+    self.contact.local?
   end
 
   def reply_count
