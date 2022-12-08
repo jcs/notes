@@ -4,10 +4,10 @@ class QueueEntry < DBModel
   belongs_to :note
 
   ACTIONS = {
-    :attachment_fetch => proc{|qe|
+    :attachment_fetch => lambda{|qe|
       Attachment.fetch_for_queue_entry(qe)
     },
-    :contact_refresh => proc{|qe|
+    :contact_refresh => lambda{|qe|
       contact, err = Contact.refresh_for_queue_entry(qe)
       if contact
         App.logger.info "[q#{qe.id}] [c#{contact.id}] refreshed for " <<
@@ -15,16 +15,21 @@ class QueueEntry < DBModel
       else
         App.logger.error "[q#{qe.id}] error refreshing: #{err}"
       end
+      return contact, err
     },
-    :signed_post => proc{|qe|
+    :signed_post => lambda{|qe|
       begin
         App.logger.info "[q#{qe.id}] [c#{qe.contact.id}] doing signed POST " <<
           "to #{qe.contact.inbox}"
-        ActivityStream.fetch(uri: qe.contact.inbox, method: :post,
-          body: qe.object.to_json).ok?
+        ret = ActivityStream.fetch(uri: qe.contact.inbox, method: :post,
+          body: qe.object.to_json)
+        if ret.ok?
+          return true, nil
+        else
+          raise "returned status #{ret.status}"
+        end
       rescue => e
-        App.logger.error "failed POSTing to #{qe.contact.inbox}: #{e.message}"
-        false
+        return false, "failed POSTing to #{qe.contact.inbox}: #{e.message}"
       end
     },
   }
