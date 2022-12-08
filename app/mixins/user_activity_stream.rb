@@ -250,11 +250,6 @@ module UserActivityStream
       "summary" => self.contact.about,
       "published" => self.created_at.utc.iso8601,
       "preferredUsername" => self.username,
-      "icon" => (self.contact.avatar ? {
-        "mediaType" => self.contact.avatar.type,
-        "type" => "Image",
-        "url": self.contact.avatar_url,
-      } : {}),
       "url" => self.activitystream_url,
       "followers" => "#{self.activitystream_url}/followers",
       "following" => "#{self.activitystream_url}/following",
@@ -278,5 +273,27 @@ module UserActivityStream
         },
       ],
     }
+
+    if self.contact.avatar
+      ret.merge!({
+        "icon" => {
+          "mediaType" => self.contact.avatar.type,
+          "type" => "Image",
+          "url": self.contact.avatar_url,
+        },
+      })
+    end
+
+    if self.contact.header
+      ret.merge!({
+        "image" => {
+          "mediaType" => self.contact.header.type,
+          "type" => "Image",
+          "url": self.contact.header_url,
+        },
+      })
+    end
+
+    ret
   end
 end

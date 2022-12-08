@@ -2,6 +2,9 @@ class Contact < DBModel
   belongs_to :avatar,
     :class_name => "Attachment",
     :foreign_key => "avatar_attachment_id"
+  belongs_to :header,
+    :class_name => "Attachment",
+    :foreign_key => "header_attachment_id"
   belongs_to :user
   has_many :notes,
     :dependent => :destroy
@@ -100,6 +103,14 @@ class Contact < DBModel
     "#{App.base_url}/avatars/#{self.address}"
   end
 
+  def header_url
+    if self.header
+      "#{App.base_url}/attachments/#{self.header.id}"
+    else
+      self.avatar_url
+    end
+  end
+
   def foreign_object
     @foreign_object ||= JSON.parse(self.foreign_object_json)
   end
@@ -154,8 +165,9 @@ class Contact < DBModel
       "url" => self.url,
       "avatar" => self.avatar_url,
       "avatar_static" => self.avatar_url,
-      "header" => self.avatar_url,
-      "header_static" => self.avatar_url,
+      # metatext requires urls for these even if they aren't present
+      "header" => self.header_url,
+      "header_static" => self.header_url,
       "followers_count" => self.local? ? self.user.followers.count : 0,
       "following_count" => self.local? ? self.user.followings.count : 0,
       "statuses_count" => self.local? ? self.notes.count : 0,

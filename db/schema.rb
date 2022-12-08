@@ -65,6 +65,7 @@ ActiveRecord::Schema.define(version: 2022_11_30_052907) do
     t.integer "avatar_attachment_id"
     t.integer "user_id"
     t.text "foreign_object_json"
+    t.integer "header_attachment_id"
     t.index ["actor"], name: "index_contacts_on_actor", unique: true
     t.index ["address"], name: "index_contacts_on_address", unique: true
     t.index ["key_id"], name: "index_contacts_on_key_id", unique: true

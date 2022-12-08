@@ -6,8 +6,10 @@ class AttachmentsController < ApplicationController
     unless attachment then halt 404, "no such attachment" end
 
     content_type attachment.type
-    last_modified (attachment.note.note_modified_at ||
-      attachment.note.created_at)
+    if attachment.note
+      last_modified (attachment.note.note_modified_at ||
+        attachment.note.created_at)
+    end
     expires 1.month, :public, :must_revalidate
     attachment.blob.data
   end
