@@ -16,7 +16,7 @@ class Contact < DBModel
   def self.queue_refresh_for_actor!(actor)
     q = QueueEntry.new
     q.action = :contact_refresh
-    q.object_json = { "actor" => actor }.to_json
+    q.object = { "actor" => actor }
     q.save!
   end
 
@@ -56,7 +56,7 @@ class Contact < DBModel
       contact.address = "#{person_ld["preferredUsername"]}@#{domain}"
       contact.key_id = person_ld["publicKey"]["id"]
       contact.key_pem = person_ld["publicKey"]["publicKeyPem"]
-      contact.foreign_object_json = person_ld.to_json
+      contact.object = person_ld
       contact.save!
     rescue ActiveRecord::RecordNotUnique => e
       if retried
@@ -111,16 +111,13 @@ class Contact < DBModel
     end
   end
 
-  def foreign_object
-    @foreign_object ||= JSON.parse(self.foreign_object_json)
-  end
-
   def inbox_uri
     @_inbox_uri ||= URI.parse(self.inbox)
   end
 
   def linkified_about(opts = {})
-    HTMLSanitizer.linkify(about, opts)
+    html, mentions = HTMLSanitizer.linkify_with_mentions(about, opts)
+    html
   end
 
   def local?

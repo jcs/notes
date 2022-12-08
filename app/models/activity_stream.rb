@@ -188,6 +188,7 @@ class ActivityStream
 
       # TODO: we need to verify the in-band signature for this forwarded
       # message/reply:
+      # https://socialhub.activitypub.rocks/t/making-sense-of-rsasignature2017/347
       # https://gist.github.com/marnanel/ba6cba944d1f12d705891b1f7a7808d6
       # for now, just assume everyone is being nice
       cont = ocont

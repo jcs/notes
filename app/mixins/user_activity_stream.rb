@@ -51,7 +51,11 @@ module UserActivityStream
 
     like.destroy!
 
-    msg = {
+    q = QueueEntry.new
+    q.action = :signed_post
+    q.user_id = self.id
+    q.contact_id = note.contact_id
+    q.object = {
       "@context" => ActivityStream::NS,
       "id" => "#{self.activitystream_actor}#like-#{Time.now.to_i}",
       "type" => "Undo",
@@ -63,13 +67,7 @@ module UserActivityStream
         "type" => "Like",
       },
       "published" => self.updated_at.utc.iso8601,
-    }.to_json
-
-    q = QueueEntry.new
-    q.action = :signed_post
-    q.user_id = self.id
-    q.contact_id = note.contact_id
-    q.object_json = msg
+    }
     q.save!
 
     return true, nil
@@ -81,15 +79,15 @@ module UserActivityStream
       return nil, err
     end
 
-    jmsg = {
+    msg = {
       "@context" => ActivityStream::NS,
       "id" => "#{self.activitystream_actor}#follow-#{Time.now.to_f}",
       "type" => "Follow",
       "actor" => self.activitystream_actor,
       "object" => contact.actor,
-    }.to_json
+    }
 
-    ActivityStream.fetch(uri: contact.inbox, method: :post, body: jmsg,
+    ActivityStream.fetch(uri: contact.inbox, method: :post, body: msg.to_json,
       signer: self)
 
     following = nil
@@ -99,7 +97,7 @@ module UserActivityStream
         following = self.followings.build
       end
       following.contact_id = contact.id
-      following.follow_object = jmsg
+      following.follow_object = msg
       following.save!
     rescue ActiveRecord::RecordNotUnique => e
     end
@@ -109,7 +107,11 @@ module UserActivityStream
 
   def activitystream_gain_follower!(contact, object)
     # queue up a reply accepting the object
-    reply = {
+    q = QueueEntry.new
+    q.action = :signed_post
+    q.user_id = self.id
+    q.contact_id = contact.id
+    q.object = {
       "@context" => ActivityStream::NS,
       "id" => "#{self.activitystream_actor}#accept-follow-#{Time.now.to_f}",
       "type" => "Accept",
@@ -117,12 +119,6 @@ module UserActivityStream
       "to" => contact.actor,
       "object" => object,
     }
-
-    q = QueueEntry.new
-    q.action = :signed_post
-    q.user_id = self.id
-    q.contact_id = contact.id
-    q.object_json = reply.to_json
     q.save!
 
     follower = nil
@@ -132,7 +128,7 @@ module UserActivityStream
         follower = self.followers.build
       end
       follower.contact_id = contact.id
-      follower.follow_object = object.to_json
+      follower.follow_object = object
       follower.save!
 
       App.logger.info "#{self.username} gained follower #{contact.actor}"
@@ -151,7 +147,11 @@ module UserActivityStream
     l.contact_id = self.contact.id
     l.save!
 
-    msg = {
+    q = QueueEntry.new
+    q.action = :signed_post
+    q.user_id = self.id
+    q.contact_id = note.contact_id
+    q.object = {
       "@context" => ActivityStream::NS,
       "id" => "#{self.activitystream_actor}#like-#{Time.now.to_i}",
       "type" => "Like",
@@ -162,83 +162,36 @@ module UserActivityStream
         "id" => note.public_id,
       },
       "published" => self.updated_at.utc.iso8601,
-    }.to_json
-
-    q = QueueEntry.new
-    q.action = :signed_post
-    q.user_id = self.id
-    q.contact_id = note.contact_id
-    q.object_json = msg
+    }
     q.save!
 
     return true, nil
   end
 
   def activitystream_ping_followers!
-    msg = {
-      "@context" => ActivityStream::NS,
-      "id" => "#{self.activitystream_actor}#update-#{Time.now.to_i}",
-      "type" => "Update",
-      "actor" => self.activitystream_actor,
-      "to" => [ ActivityStream::PUBLIC_URI ],
-      "object" => self.activitystream_object,
-      "published" => self.updated_at.utc.iso8601,
-    }.to_json
 
     self.followers.includes(:contact).each do |follower|
       q = QueueEntry.new
       q.action = :signed_post
       q.user_id = self.id
       q.contact_id = follower.contact_id
-      q.object_json = msg
+      q.object = {
+        "@context" => ActivityStream::NS,
+        "id" => "#{self.activitystream_actor}#update-#{Time.now.to_i}",
+        "type" => "Update",
+        "actor" => self.activitystream_actor,
+        "to" => [ ActivityStream::PUBLIC_URI ],
+        "object" => self.activitystream_object,
+        "published" => self.updated_at.utc.iso8601,
+      }
       q.save!
     end
 
     return true, nil
   end
 
-  def activitystream_unfollow!(actor)
-    ld, err = ActivityStream.get_json_ld(actor)
-    if !ld
-      return false, err
-    end
-
-    actor = ld["id"]
-
-    f = self.followings.joins(:contact).where("contacts.actor = ?", actor).first
-    msg = {
-      "@context" => ActivityStream::NS,
-    }
-    if f
-      msg.merge!({
-        "id" => "#{self.activitystream_actor}#undo-follow-#{Time.now.to_f}",
-        "type" => "Undo",
-        "actor" => self.activitystream_actor,
-        "object" => JSON.parse(f.follow_object),
-      })
-    else
-      msg.merge!({
-        "id" => "#{self.activitystream_actor}#unfollow-#{Time.now.to_f}",
-        "type" => "Unfollow",
-        "actor" => self.activitystream_actor,
-        "object" => ld["id"],
-      })
-    end
-
-    ActivityStream.fetch(uri: ld["inbox"], method: :post, body: msg.to_json,
-      signer: self)
-
-    # TODO: only if that was accepted
-    f = self.followings.joins(:contact).where("contacts.actor = ?", actor).first
-    if f
-      f.destroy
-    end
-
-    return true, nil
-  end
-
   def activitystream_object
-    {
+    ret = {
       "@context" => [
         ActivityStream::NS,
         ActivityStream::NS_SECURITY,

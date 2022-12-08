@@ -10,6 +10,9 @@ class Note < DBModel
     :dependent => :destroy
   has_many :forwards,
     :dependent => :destroy
+  has_many :replies,
+    :class_name => "Note",
+    :foreign_key => "parent_note_id"
 
   validates_presence_of :contact
 
@@ -46,18 +49,25 @@ class Note < DBModel
     if note["updated"] && note["updated"] != note["published"]
       dbnote.note_modified_at = DateTime.parse(note["updated"])
     end
-    dbnote.foreign_object_json = note.to_json
+    dbnote.object = note
     dbnote.conversation = note["conversation"]
     dbnote.note = note["content"]
 
-    dbnote.is_public = (note["to"].is_a?(Array) ? note["to"].to_s :
-      [ note["to"] ]).include?(ActivityStream::PUBLIC_URI)
+    tos = (note["to"].is_a?(Array) ? note["to"] : [ note["to"] ])
+    ccs = (note["cc"].is_a?(Array) ? note["cc"] : [ note["cc"] ])
+    dbnote.is_public = tos.include?(ActivityStream::PUBLIC_URI) ||
+      ccs.include?(ActivityStream::PUBLIC_URI)
+
     if dbnote.is_public
-      if note["inReplyTo"].present? &&
-      !note["inReplyTo"].starts_with?(App.base_url)
-        # TODO: check for mentions of us
-        dbnote.is_public = false
-      end
+      # anything directly mentioning us is for our timeline, or any public
+      # chatter that is not a reply to someone else
+      # TODO: but if it's chatter between two people we follow, maybe we want
+      # to see it
+      dbnote.for_timeline = tos.include?(asvm.contact.actor) ||
+        ccs.include?(asvm.contact.actor) || !dbnote.directed_at_someone?
+    else
+      # not public, this is a private message
+      dbnote.for_timeline = false
     end
 
     if note["inReplyTo"].present? &&
@@ -65,12 +75,20 @@ class Note < DBModel
       dbnote.parent_note_id = parent.id
     end
 
+    dbnote.mentioned_contact_ids = []
+    (note["tag"] || []).select{|t| t["type"] == "Mention" }.each do |m|
+      if c = Contact.where(:actor => m["href"]).first
+        dbnote.mentioned_contact_ids.push c.id
+      end
+    end
+    dbnote.mentioned_contact_ids.uniq!
+
     dbnote.save!
 
     # match our attachment list with the note's, deleting or creating as
     # necessary
     have = dbnote.attachments.to_a
-    want = dbnote.foreign_object["attachment"] || []
+    want = dbnote.object["attachment"] || []
     to_fetch = {}
     to_delete = {}
 
@@ -93,7 +111,7 @@ class Note < DBModel
       qe = QueueEntry.new
       qe.action = :attachment_fetch
       qe.note_id = dbnote.id
-      qe.object_json = obj.to_json
+      qe.object = obj
       qe.save!
     end
 
@@ -122,18 +140,34 @@ class Note < DBModel
       return nil
     end
 
+    to = []
+    cc = []
+    if self.is_public?
+      if self.directed_at_someone?
+        mc = self.mentioned_contacts
+        to = mc.shift.actor
+        cc = mc.map{|c| c.actor } +
+          [ ActivityStream::PUBLIC_URI ]
+      else
+        to = [ ActivityStream::PUBLIC_URI ]
+        cc = [ "#{self.user.activitystream_url}/followers" ] +
+          self.mentioned_contacts.map{|c| c.actor }
+      end
+    else
+      to = self.mentioned_contacts.first.actor
+    end
+
     {
       "@context" => ActivityStream::NS,
       "id" => self.public_id,
       "type" => "Note",
-      "published" => self.created_at.utc.iso8601,
-      "updated" => self.note_modified_at ?
-        self.note_modified_at.utc.iso8601 : nil,
-      "to" => [ ActivityStream::PUBLIC_URI ],
-      "cc" => [ "#{self.user.activitystream_url}/followers" ],
+      "published" => (self.created_at || Time.now).utc.iso8601,
+      "updated" => self.note_modified_at.try(:utc).try(:iso8601),
+      "to" => to,
+      "cc" => cc,
       "context" => self.conversation,
       "attributedTo" => self.user.activitystream_actor,
-      "content" => self.linkified_note,
+      "content" => self.note,
       "url" => "#{self.user.activitystream_url}/#{self.id}",
       "replies" => {
         "id" => "#{self.user.activitystream_url}/#{self.id}/replies",
@@ -148,29 +182,52 @@ class Note < DBModel
       "attachment" => self.attachments.order("id").map{|a|
         a.activitystream_object
       },
+      "tag" => self.mentioned_contacts.map{|c|
+        {
+          "type" => "Mention",
+          "href" => c.actor,
+          "name" => "@#{c.address}",
+        }
+      },
     }
   end
 
   def activitystream_publish!(verb)
-    js = self.activitystream_activity_object(verb).to_json
+    if !self.local?
+      raise "trying to publish a non-local note!"
+    end
 
-    self.user.followers.includes(:contact).each do |follower|
+    tos = (self.activitystream_object["to"] +
+      self.activitystream_object["cc"]).uniq
+
+    to_contacts = []
+    if tos.include?(ActivityStream::PUBLIC_URI)
+      to_contacts = self.user.followers.includes(:contact).map{|f| f.contact }
+    else
+      to_contacts = Contact.where(:actor => tos)
+    end
+
+    js = self.activitystream_activity_object(verb)
+
+    to_contacts.each do |c|
       q = QueueEntry.new
       q.action = :signed_post
       q.user_id = self.contact.user.id
-      q.contact_id = follower.contact.id
+      q.contact_id = c.id
       q.note_id = self.id
-      q.object_json = js
+      q.object = js
       q.save!
     end
+
+    to_contacts.count
   end
 
   def authoritative_url
     self.local? ? self.url : self.public_id
   end
 
-  def foreign_object
-    @foreign_object ||= JSON.parse(self.foreign_object_json || "{}")
+  def directed_at_someone?
+    !!self.plaintext_note.match(/\A@/)
   end
 
   def forward_by!(contact)
@@ -186,10 +243,6 @@ class Note < DBModel
     @forward_count ||= self.forwards.count
   end
 
-  def html
-    linkified_note
-  end
-
   def like_by!(contact)
     if !(l = self.likes.where(:contact_id => contact.id).first)
       l = Like.new
@@ -203,16 +256,25 @@ class Note < DBModel
     @like_count ||= self.likes.count
   end
 
-  def linkified_note(opts = {})
-    HTMLSanitizer.linkify(note, opts)
-  end
-
   def local?
     self.contact.local?
   end
 
+  def mentioned_contacts
+    @mentioned_contacts ||=
+      Contact.where(:id => (self.mentioned_contact_ids || [])).to_a
+  end
+
+  def plaintext_note
+    note.gsub(/<[^>]+>/, "")
+  end
+
   def reply_count
-    @reply_count ||= Note.where(:parent_note_id => self.id).count
+    @reply_count ||= self.replies.count
+  end
+
+  def sanitized_html(opts = {})
+    @sanitized_html ||= HTMLSanitizer.sanitize(note, opts)
   end
 
   def thread
@@ -244,7 +306,7 @@ class Note < DBModel
       "in_reply_to_id" => self.parent_note_id.try(:to_s),
       "in_reply_to_account_id" => self.parent_note_id.present? ?
         self.parent_note.contact_id.to_s : nil,
-      "sensitive" => !!foreign_object["sensitive"],
+      "sensitive" => !!object["sensitive"],
       "spoiler_text" => "",
       "visibility" => "public",
       "language" => "en",

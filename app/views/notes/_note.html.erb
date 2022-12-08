@@ -22,7 +22,7 @@
   </span>
 
   <div class="note_text">
-    <%= note.html %>
+    <%= note.sanitized_html %>
 
     <% if (count = note.attachments.count) > 0 %>
       <div class="note_attachments note_attachments_count_<%= count %>">

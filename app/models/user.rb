@@ -67,7 +67,7 @@ class User < DBModel
 
   def timeline
     Note.where(:contact_id => self.followings.pluck(:contact_id)).
-      includes(:contact).where(:is_public => true)
+      includes(:contact).where(:for_timeline => true)
   end
 
 private

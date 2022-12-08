@@ -7,6 +7,41 @@ class APIStatusesController < ApplicationController
     find_api_token_user
   end
 
+  post "/" do
+    n = Note.new
+    n.contact_id = @api_token.user.contact.id
+    if params[:in_reply_to_id].present?
+      n.parent_note_id = params[:in_reply_to_id]
+    end
+    n.is_public = (params[:visibility] == "public")
+    n.for_timeline = true
+
+    html, mentions = HTMLSanitizer.linkify_with_mentions(params[:status])
+    n.note = html
+
+    n.mentioned_contact_ids = []
+    mentions.each do |m|
+      c = Contact.where(:address => m[:address]).first
+      if !c
+        begin
+          Timeout.timeout(1.5) do
+            c, err = Contact.refresh_for_actor(m[:address], nil, false)
+          end
+        rescue Timeout::Error
+        end
+      end
+
+      if c
+        n.mentioned_contact_ids.push c.id
+      else
+        App.logger.error "couldn't find contact for #{m.inspect} " <<
+          "when building new note"
+      end
+    end
+
+    n.save!
+  end
+
   get "/:id" do
     note = Note.where(:id => params[:id]).first
     if !note

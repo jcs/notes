@@ -5,8 +5,10 @@ class HTMLSanitizer
       [^\s<\u00A0'",]+
     }ix
 
-  def self.linkify(str, opts = {})
+  def self.linkify_with_mentions(str, opts = {})
     html = str.strip.gsub(/\n\n+/, "</p><p>").gsub("\n", "<br>")
+
+    mentions = []
 
     doc = Nokogiri::HTML(html)
     doc.xpath("//text()").each do |node|
@@ -27,22 +29,23 @@ class HTMLSanitizer
       text.gsub!(LINKIFY_RE) do |link|
         title = link.dup
 
+        is_mention = false
+
         if m = link.match(/^@([^@]+)@([^@]+)/)
-          if m[2] == "twitter.com"
-            link = "https://twitter.com/#{m[1]}"
-          else
-            link = "#{App.base_url}/locate/#{CGI.escape(m[1] + "@" + m[2])}"
-          end
+          link = "https://#{m[2]}/#{m[1]}"
+          mentions.push({ :actor => link, :address => "#{m[1]}@#{m[2]}" })
+          is_mention = true
         end
 
-        "<a href=\"" << CGI.escapeHTML(link) << "\">" <<
+        "<a href=\"" << CGI.escapeHTML(link) << "\"" <<
+          (is_mention ? " class=\"mention\"" : "") << ">" <<
           CGI.escapeHTML(title) << "</a>"
       end
 
       node.replace text
     end
 
-    self.sanitize(doc.xpath("//body").inner_html, opts)
+    return self.sanitize(doc.xpath("//body").inner_html, opts), mentions
   end
 
   def self.sanitize(html, opts = {})
@@ -57,6 +60,6 @@ class HTMLSanitizer
           "rel" => "nofollow noreferrer",
           "target" => opts[:target],
         }
-      }))
+      })).gsub("\n", "")
   end
 end

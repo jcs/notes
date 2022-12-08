@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_11_30_052907) do
+ActiveRecord::Schema.define(version: 2022_12_08_200539) do
 
   create_table "api_apps", force: :cascade do |t|
     t.string "client_name"
@@ -64,7 +64,7 @@ ActiveRecord::Schema.define(version: 2022_11_30_052907) do
     t.text "about"
     t.integer "avatar_attachment_id"
     t.integer "user_id"
-    t.text "foreign_object_json"
+    t.json "object"
     t.integer "header_attachment_id"
     t.index ["actor"], name: "index_contacts_on_actor", unique: true
     t.index ["address"], name: "index_contacts_on_address", unique: true
@@ -77,7 +77,7 @@ ActiveRecord::Schema.define(version: 2022_11_30_052907) do
     t.datetime "updated_at", null: false
     t.integer "user_id"
     t.integer "contact_id"
-    t.text "follow_object"
+    t.json "follow_object"
     t.index ["user_id", "contact_id"], name: "index_followers_on_user_id_and_contact_id", unique: true
   end
 
@@ -86,7 +86,7 @@ ActiveRecord::Schema.define(version: 2022_11_30_052907) do
     t.datetime "updated_at", null: false
     t.integer "user_id"
     t.integer "contact_id"
-    t.text "follow_object"
+    t.json "follow_object"
     t.index ["user_id", "contact_id"], name: "index_followings_on_user_id_and_contact_id", unique: true
   end
 
@@ -116,12 +116,15 @@ ActiveRecord::Schema.define(version: 2022_11_30_052907) do
     t.integer "parent_note_id"
     t.text "import_id"
     t.string "conversation"
-    t.text "foreign_object_json"
+    t.json "object"
     t.datetime "note_modified_at"
     t.string "public_id"
     t.boolean "is_public", default: false
+    t.json "mentioned_contact_ids"
+    t.boolean "for_timeline", default: false
     t.index ["contact_id"], name: "index_notes_on_contact_id"
     t.index ["conversation"], name: "index_notes_on_conversation"
+    t.index ["for_timeline"], name: "index_notes_on_for_timeline"
     t.index ["import_id"], name: "index_notes_on_import_id", unique: true
     t.index ["is_public"], name: "index_notes_on_is_public"
     t.index ["parent_note_id"], name: "index_notes_on_parent_note_id"
@@ -135,7 +138,7 @@ ActiveRecord::Schema.define(version: 2022_11_30_052907) do
     t.integer "user_id"
     t.integer "contact_id"
     t.string "action"
-    t.text "object_json"
+    t.json "object"
     t.integer "note_id"
     t.index ["contact_id"], name: "index_queue_entries_on_contact_id"
     t.index ["note_id"], name: "index_queue_entries_on_note_id"

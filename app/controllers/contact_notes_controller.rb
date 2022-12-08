@@ -44,10 +44,10 @@ private
   def find_contact
     case params[:address]
     when TIMELINE
-      @scope = @user.timeline.order("created_at DESC")
+      @scope = @user.timeline.where(:is_public => true).order("created_at DESC")
       @title = "Notes from timeline"
     when EVERYONE
-      @scope = Note.all.order("created_at DESC")
+      @scope = Note.where(:is_public => true).order("created_at DESC")
       @title = "Notes from everyone"
     else
       @contact = Contact.where(:address => params[:address]).first

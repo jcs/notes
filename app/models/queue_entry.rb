@@ -21,7 +21,7 @@ class QueueEntry < DBModel
         App.logger.info "[q#{qe.id}] [c#{qe.contact.id}] doing signed POST " <<
           "to #{qe.contact.inbox}"
         ActivityStream.fetch(uri: qe.contact.inbox, method: :post,
-          body: qe.object_json).ok?
+          body: qe.object.to_json).ok?
       rescue => e
         App.logger.error "failed POSTing to #{qe.contact.inbox}: #{e.message}"
         false
@@ -32,10 +32,6 @@ class QueueEntry < DBModel
   MAX_TRIES = 8
 
   before_create :assign_first_try
-
-  def object
-    @_object ||= JSON.parse(self.object_json)
-  end
 
   def process!
     ok = false

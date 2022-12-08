@@ -34,7 +34,9 @@ class InboxController < ApplicationController
       when "Note"
         if (note = Note.ingest_note!(asvm))
           request.log_extras[:note] = note.id
-          request.log_extras[:result] = "created note"
+          request.log_extras[:result] =
+            "created #{note.is_public ? "public" : "private"} " <<
+            (note.for_timeline? ? "timeline" : "reply") << " note"
         end
       else
         request.log_extras[:error] = "unsupported Create for #{type}"
@@ -42,7 +44,7 @@ class InboxController < ApplicationController
 
     when "Delete"
       case type
-      when "Tombstone"
+      when "Tombstone", "Note"
         if (note = asvm.contact.notes.
         where(:public_id => asvm.message["object"]["id"]).first)
           note.destroy
