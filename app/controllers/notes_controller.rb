@@ -65,6 +65,11 @@ class NotesController < ApplicationController
     erb :forwards
   end
 
+  get "/:id/replies" do
+    find_note
+    erb :replies
+  end
+
 private
   def find_note
     note_id = params[:id]

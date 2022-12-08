@@ -43,6 +43,13 @@
   <% if note.local? %>
     <div class="note_vanity">
       <% if dedicated %>
+        <% if note.reply_count > 0 %>
+          <a href="<%= App.base_url %>/<%= note.id %>/replies">
+            <strong><%= note.reply_count %></strong>
+            Repl<%= note.reply_count == 1 ? "y" : "ies" %>
+            &nbsp;
+          </a>
+        <% end %>
         <% if note.like_count > 0 %>
           <a href="<%= App.base_url %>/<%= note.id %>/likes">
             <strong><%= note.like_count %></strong>

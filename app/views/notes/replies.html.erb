@@ -1,0 +1,16 @@
+<h1 class="note">
+  <a href="<%= App.base_url %>" class="notes_back_link">
+    <%= partial "../home/back_button" %>
+  </a>
+  Note
+</h1>
+
+<%= partial "note", :locals => { :note => @note, :dedicated => true } %>
+
+<h1 class="note">
+  <%= @note.reply_count %> Repl<%= @note.reply_count == 1 ? "y" : "ies" %>
+</h1>
+
+<% @note.replies.each do |reply| %>
+  <%= partial "note", :locals => { :note => reply } %>
+<% end %>
