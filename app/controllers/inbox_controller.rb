@@ -76,6 +76,15 @@ class InboxController < ApplicationController
         request.log_extras[:result] = "liked note"
       end
 
+    when "Move"
+      if asvm.message["object"] == asvm.contact.actor
+        asvm.contact.move_to!(asvm.message["target"])
+        request.log_extras[:result] = "moved to #{asvm.message["target"]}"
+      else
+        request.log_extras[:error] = "unsupported Move for non-actor " <<
+          "#{asvm.message.inspect}"
+      end
+
     when "Undo"
       case type
       when "Announce"

@@ -124,6 +124,21 @@ class Contact < DBModel
     self.user_id.present?
   end
 
+  def move_to!(new_actor)
+    self.transaction do
+      other_c = Contact.where(:actor => new_actor).first
+      if other_c
+        other_c.notes.each do |n|
+          n.update_column(:contact_id, self.id)
+        end
+        other_c.destroy!
+      end
+      self.actor = new_actor
+      self.save!
+      Contact.queue_refresh_for_actor!(new_actor)
+    end
+  end
+
   def realname_or_address
     self.realname.to_s == "" ? self.address : self.realname
   end
