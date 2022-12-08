@@ -15,6 +15,15 @@ class Attachment < DBModel
 
   MAX_SIZE = 300
 
+  def self.build_from_upload(params)
+    a = Attachment.new
+    a.build_blob
+    a.blob.data = params[:tempfile].read
+    a.type = params[:type]
+    a.infer_size!
+    return a, nil
+  end
+
   def self.build_from_url(url)
     a = Attachment.new
     a.source = url
@@ -27,62 +36,7 @@ class Attachment < DBModel
     a.build_blob
     a.blob.data = res.body
     a.type = res.headers["Content-Type"]
-
-    if a.image?
-      begin
-        reader, writer = IO.pipe("binary", :binmode => true)
-        writer.set_encoding("binary")
-
-        pid = fork do
-          reader.close
-
-          # lock down
-          Pledge.pledge("stdio")
-
-          input = GD2::Image.load(a.blob.data).to_true_color
-
-          if input.width == 0 || input.height == 0
-            raise "invalid size #{input.width}x#{input.height}"
-          end
-
-          writer.write([ input.width, input.height ].pack("LL"))
-
-          # TODO: strip EXIF
-
-#          if input.width < MIN_WIDTH || input.height < MIN_HEIGHT ||
-#          input.width > MAX_WIDTH || input.height > MAX_HEIGHT
-#            # don't write anything else, the reader will error nicely
-#          else
-#            final = GD2::Image::TrueColor.new(input.width, input.height)
-#            final.alpha_blending = false
-#            final.save_alpha = false
-#            final.copy_from(input, 0, 0, 0, 0, input.width, input.height)
-#
-#            writer.write(final.png(9))
-#          end
-
-          writer.close
-          exit!(0) # skips exit handlers
-        end
-
-        writer.close
-
-        result = "".encode("binary")
-        while !reader.eof?
-          result << reader.read(1024)
-        end
-        reader.close
-
-        Process.wait(pid)
-
-      rescue Errno::EPIPE
-        STDERR.puts "got EPIPE forking image converter"
-      end
-
-      #self.width, self.height, data = result.to_s.unpack("LLa*")
-      a.width, a.height = result.to_s.unpack("LL")
-    end
-
+    a.infer_size!
     return a, nil
   end
 
@@ -132,6 +86,87 @@ class Attachment < DBModel
 
   def image?
     [ TYPES[:jpeg], TYPES[:png], TYPES[:gif] ].include?(self.type)
+  end
+
+  def infer_size!
+    if self.image?
+      begin
+        reader, writer = IO.pipe("binary", :binmode => true)
+        writer.set_encoding("binary")
+
+        pid = fork do
+          reader.close
+
+          # lock down
+          Pledge.pledge("stdio")
+
+          input = GD2::Image.load(self.blob.data).to_true_color
+
+          if input.width == 0 || input.height == 0
+            raise "invalid size #{input.width}x#{input.height}"
+          end
+
+          writer.write([ input.width, input.height ].pack("LL"))
+
+          # TODO: strip EXIF losslessly
+
+          writer.close
+          exit!(0) # skips exit handlers
+        end
+
+        writer.close
+
+        result = "".encode("binary")
+        while !reader.eof?
+          result << reader.read(1024)
+        end
+
+      rescue Errno::EPIPE
+        STDERR.puts "got EPIPE forking image converter"
+      ensure
+        begin
+          reader.close
+        rescue
+        end
+        Process.wait(pid)
+      end
+
+      #self.width, self.height, data = result.to_s.unpack("LLa*")
+      self.width, self.height = result.to_s.unpack("LL")
+    end
+
+    self
+  end
+
+  def media_object
+    {
+      :id => self.id.to_s,
+      :type => (self.video? ? "video" : "image"),
+      :url => self.url,
+      :preview_url => self.url,
+      :remote_url => nil,
+      :text_url => self.url,
+      :meta => {
+        :focus => {
+          :x => 0.0,
+          :y => 0.0,
+        },
+        :original => {
+          :width => self.width,
+          :height => self.height,
+          :size => "#{self.width}x#{self.height}",
+          :aspect => (self.width / self.height.to_f),
+        },
+        :small => {
+          :width => self.width,
+          :height => self.height,
+          :size => "#{self.width}x#{self.height}",
+          :aspect => (self.width / self.height.to_f),
+        },
+      },
+      :description => self.summary.to_s,
+      :blurhash => "",
+    }
   end
 
   def timeline_object

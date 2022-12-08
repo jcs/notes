@@ -4,7 +4,7 @@ class ApplicationController < App
   use Rack::Csrf, :raise => false, :skip_if => lambda {|req|
     # :skip => [ "POST:/notes/inbox" ] should work but request.path_info is not
     # set properly with our routing
-    req.request_method.upcase == "POST" && (
+    [ "POST", "PUT", "DELETE" ].include?(req.request_method.upcase) && (
       req.env["REQUEST_PATH"] == "#{App.base_path}/inbox" ||
       req.env["REQUEST_PATH"].starts_with?("#{App.base_path}/api/v1") ||
       req.env["REQUEST_PATH"].starts_with?("#{App.domain}/oauth") ||

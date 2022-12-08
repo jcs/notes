@@ -179,7 +179,9 @@ class Note < DBModel
           "items" => [],
         }
       },
-      "attachment" => self.attachments.order("id").map{|a|
+      # this doesn't use .order("id") because we may have unsaved built objects
+      # and don't want to hit the db
+      "attachment" => self.attachments.sort_by{|a| a.id }.map{|a|
         a.activitystream_object
       },
       "tag" => self.mentioned_contacts.map{|c|

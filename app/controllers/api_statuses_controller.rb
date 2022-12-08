@@ -39,7 +39,21 @@ class APIStatusesController < ApplicationController
       end
     end
 
-    n.save!
+    Note.transaction do
+      (params[:media_ids] || []).each do |i|
+        if (a = Attachment.where(:id => i).first)
+          n.attachments.push a
+        else
+          App.logger.error "can't find attachment #{i} building new note"
+        end
+      end
+
+      App.logger.info "new note: #{n.activitystream_object.inspect}"
+
+      n.save!
+    end
+
+    json(n.timeline_object_for(@api_token.user))
   end
 
   get "/:id" do
