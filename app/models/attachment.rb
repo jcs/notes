@@ -115,7 +115,7 @@ class Attachment < DBModel
   def html
     if image?
       "<a href=\"#{self.url}\">" <<
-        "<img src=\"#{self.url}\" " <<
+        "<img src=\"#{self.url}\" loading=\"lazy\" " <<
         "intrinsicsize=\"#{self.width}x#{self.height}\"></a>"
     elsif video?
       "<video controls=1 preload=metadata " <<
