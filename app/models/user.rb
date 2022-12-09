@@ -52,9 +52,31 @@ class User < DBModel
   end
 
   def notes_from_followed
-    Note.where(:contact_id => (self.followings.pluck(:contact_id) +
-      [ self.contact.id ])).includes(:contact).
-      where("for_timeline = ? OR contact_id = ?", true, self.contact.id)
+    # notes from any of these:
+    # - contacts we follow
+    # - from us
+    # - forwarded by contacts we follow
+    # - forwarded by us
+
+    # sorry for all the subqueries :(
+    Note.includes(:contact).where("
+      contact_id IN (
+        SELECT contact_id FROM followings WHERE user_id = ?
+      ) OR (
+        contact_id = ?
+      ) OR (
+        notes.id IN (
+          SELECT note_id FROM forwards WHERE contact_id IN (
+            SELECT contact_id FROM followings WHERE user_id = ?
+          )
+        ) OR (
+          notes.id IN (
+            SELECT note_id FROM forwards WHERE contact_id = ?
+          )
+        )
+      )", self.id, self.contact.id, self.id, self.contact.id).
+      where("for_timeline = ? OR contact_id = ?", true, self.contact.id).
+      order("created_at DESC")
   end
 
   def store_marker_for(what, value)
