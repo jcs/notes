@@ -44,8 +44,7 @@ private
   def find_contact
     case params[:address]
     when TIMELINE
-      @scope = @user.notes_from_followed.where(:is_public => true).
-        order("created_at DESC")
+      @scope = @user.notes_from_followed.where(:is_public => true)
       @title = "Notes from timeline"
     when EVERYONE
       @scope = Note.where(:is_public => true).order("created_at DESC")
