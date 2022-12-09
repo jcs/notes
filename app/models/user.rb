@@ -51,6 +51,12 @@ class User < DBModel
     JSON.parse(ks)
   end
 
+  def notes_from_followed
+    Note.where(:contact_id => (self.followings.pluck(:contact_id) +
+      [ self.contact.id ])).includes(:contact).
+      where("for_timeline = ? OR contact_id = ?", true, self.contact.id)
+  end
+
   def store_marker_for(what, value)
     old = marker_for(what)
     version = 1
@@ -63,11 +69,6 @@ class User < DBModel
         "version" => version,
         "updated_at" => Time.now.utc.iso8601,
       }.to_json)
-  end
-
-  def timeline
-    Note.where(:contact_id => self.followings.pluck(:contact_id)).
-      includes(:contact).where(:for_timeline => true)
   end
 
 private

@@ -9,7 +9,7 @@ class APITimelinesController < ApplicationController
   get "/home" do
     find_api_token_user
 
-    tl = @api_token.user.timeline.order("created_at DESC").limit(20)
+    tl = @api_token.user.notes_from_followed.order("created_at DESC").limit(20)
 
     if params[:max_id]
       tl = tl.where("id < ?", params[:max_id])
