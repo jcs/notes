@@ -147,16 +147,15 @@ class ActivityStream
       # request
       begin
         Timeout.timeout(1.5) do
-          Contact.refresh_for_actor(comps["keyId"], nil, false)
+          Contact.refresh_for_actor(comps["keyId"])
         end
       rescue Timeout::Error
       end
 
-      # schedule a full refresh of this actor to fetch their avatar
-      Contact.queue_refresh_for_actor!(comps["keyId"])
-
       cont = Contact.where(:key_id => comps["keyId"]).first
       if !cont
+        # schedule a full refresh of this actor in the background
+        Contact.queue_refresh_for_actor!(comps["keyId"])
         return nil, "no contact with key id #{comps["keyId"].inspect}"
       end
     end
@@ -171,15 +170,15 @@ class ActivityStream
       if !ocont
         begin
           Timeout.timeout(1.5) do
-            Contact.refresh_for_actor(js["actor"], nil, false)
+            Contact.refresh_for_actor(js["actor"])
           end
         rescue Timeout::Error
         end
 
-        # schedule a full refresh of this actor to fetch their avatar
-        Contact.queue_refresh_for_actor!(js["actor"])
-
         ocont = Contact.where(:actor => js["actor"]).first
+        if !ocont
+          Contact.queue_refresh_for_actor!(js["actor"])
+        end
       end
 
       if !ocont

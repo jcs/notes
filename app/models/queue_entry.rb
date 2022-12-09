@@ -17,6 +17,17 @@ class QueueEntry < DBModel
       end
       return contact, err
     },
+    :contact_update_avatar => lambda{|qe|
+      ret, err = qe.contact.update_avatar!
+      if ret
+        App.logger.info "[q#{qe.id}] [c#{qe.contact_id}] updated avatar for " <<
+          "#{qe.contact.actor}"
+      else
+        App.logger.error "[q#{qe.id}] [c#{qe.contact_id}] failed updating " <<
+          "avatar for #{qe.contact.actor}: #{err}"
+      end
+      return true, nil
+    },
     :signed_post => lambda{|qe|
       begin
         App.logger.info "[q#{qe.id}] [c#{qe.contact.id}] doing signed POST " <<

@@ -74,7 +74,7 @@ module UserActivityStream
   end
 
   def activitystream_follow!(actor)
-    contact, err = Contact.refresh_for_actor(actor, nil, true)
+    contact, err = Contact.refresh_for_actor(actor)
     if !contact
       return nil, err
     end

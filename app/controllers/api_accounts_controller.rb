@@ -44,11 +44,13 @@ class APIAccountsController < ApplicationController
       return [].to_json
     end
 
+    contact.ingest_recent_notes!
+
     scope = Note.where(:contact_id => contact.id).includes(:contact).
       order("created_at DESC").limit(20)
 
     if params[:exclude_replies].to_s == "true"
-      scope = scope.where(:is_public => true)
+      scope = scope.where(:for_timeline => true)
     end
 
     scope.map{|n| n.timeline_object_for(@api_token.user) }.to_json

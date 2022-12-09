@@ -21,10 +21,14 @@ class Contact < DBModel
   end
 
   def self.refresh_for_queue_entry(qe)
-    self.refresh_for_actor(qe.object["actor"], nil, true)
+    self.refresh_for_actor(qe.object["actor"])
   end
 
-  def self.refresh_for_actor(actor, person_ld = nil, fetch_avatar = false)
+  def self.refresh_for_actor(actor, person_ld = nil)
+    if (c = Contact.where(:actor => actor).first) && c.recently_refreshed?
+      return c
+    end
+
     if !person_ld
       if ActivityStream.debug
         App.logger.info "refreshing contact for #{actor.inspect}, fetching LD"
@@ -57,6 +61,7 @@ class Contact < DBModel
       contact.key_id = person_ld["publicKey"]["id"]
       contact.key_pem = person_ld["publicKey"]["publicKeyPem"]
       contact.object = person_ld
+      contact.last_refreshed_at = Time.now
       contact.save!
     rescue ActiveRecord::RecordNotUnique => e
       if retried
@@ -65,24 +70,12 @@ class Contact < DBModel
       retry
     end
 
-    if fetch_avatar
-      if person_ld["icon"] && person_ld["icon"]["type"] == "Image" &&
-      person_ld["icon"]["url"].to_s != ""
-        av, err = Attachment.build_from_url(person_ld["icon"]["url"])
-        if av
-          if contact.avatar
-            contact.avatar.destroy
-          end
-          contact.avatar = av
-          contact.save!
-        end
-      elsif contact.avatar
-        contact.avatar.destroy
-        contact.avatar_attachment_id = nil
-        contact.save!
-        return nil, "[c#{contact.id}] no avatar icon specified but " <<
-          "have attachment, deleting it"
-      end
+    if contact && person_ld["icon"].try(:[], "type") == "Image" &&
+    person_ld["icon"]["url"].present?
+      qe = QueueEntry.new
+      qe.contact_id = contact.id
+      qe.action = :contact_update_avatar
+      qe.save!
     end
 
     return contact, nil
@@ -115,6 +108,55 @@ class Contact < DBModel
     @_inbox_uri ||= URI.parse(self.inbox)
   end
 
+  def ingest_recent_notes!
+    if self.recently_refreshed?
+      return nil, "recently refreshed"
+    end
+
+    ref, err = self.refresh!
+    if !ref
+      return nil, err
+    end
+
+    if !self.object["outbox"].present?
+      return nil, "no outbox present in LD"
+    end
+
+    outbox, err = ActivityStream.get_json(self.object["outbox"])
+    if outbox == nil
+      return nil, "fetch of outbox failed: #{err}"
+    end
+
+    if !outbox["first"].present?
+      return nil, "outbox has no first item"
+    end
+
+    items, err = ActivityStream.get_json(outbox["first"])
+    if items == nil
+      return nil, "fetch of first page at #{outbox["first"]} failed: #{err}"
+    end
+
+    if !items["orderedItems"].is_a?(Array)
+      return nil, "outbox items does not have an array for orderedItems"
+    end
+
+    # newest should be first
+    ingested = 0
+    items["orderedItems"][0, 20].reverse.each do |i|
+      if i["object"].try(:[], "type") != "Note"
+        next
+      end
+
+      asvm = ActivityStreamVerifiedMessage.new(self, i)
+      if asvm
+        Note.ingest_note!(asvm)
+        ingested += 1
+      end
+    end
+
+    return ingested, nil
+  end
+
   def linkified_about(opts = {})
     html, mentions = HTMLSanitizer.linkify_with_mentions(about, opts)
     html
@@ -143,8 +185,13 @@ class Contact < DBModel
     self.realname.to_s == "" ? self.address : self.realname
   end
 
-  def refresh!(include_avatar = false)
-    Contact.refresh_for_actor(self.actor, nil, include_avatar)
+  def recently_refreshed?
+    self.last_refreshed_at != nil && (Time.now - self.last_refreshed_at) <
+      (60 * 5)
+  end
+
+  def refresh!
+    Contact.refresh_for_actor(self.actor)
   end
 
   def relationship_object_with(user)
@@ -188,6 +235,27 @@ class Contact < DBModel
       "emojis" => [],
       "fields" => [],
     }
+  end
+
+  def update_avatar!
+    if self.object["icon"] && self.object["icon"]["type"] == "Image" &&
+    self.object["icon"]["url"].to_s != ""
+      av, err = Attachment.build_from_url(self.object["icon"]["url"])
+      if !av
+        return nil, "failed fetching #{self.object["icon"]["url"]}: #{err}"
+      end
+      if self.avatar
+        self.avatar.destroy
+      end
+      self.avatar = av
+      self.save!
+    elsif self.avatar
+      self.avatar.destroy
+      self.avatar_attachment_id = nil
+      self.save!
+    end
+
+    return true, nil
   end
 
   def url_or_locate_url

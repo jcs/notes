@@ -14,10 +14,11 @@ class APIStatusesController < ApplicationController
       n.parent_note_id = params[:in_reply_to_id]
     end
     n.is_public = (params[:visibility] == "public")
-    n.for_timeline = true
 
     html, mentions = HTMLSanitizer.linkify_with_mentions(params[:status])
     n.note = html
+
+    n.for_timeline = !n.directed_at_someone?
 
     n.mentioned_contact_ids = []
     mentions.each do |m|
@@ -25,7 +26,7 @@ class APIStatusesController < ApplicationController
       if !c
         begin
           Timeout.timeout(1.5) do
-            c, err = Contact.refresh_for_actor(m[:address], nil, false)
+            c, err = Contact.refresh_for_actor(m[:address])
           end
         rescue Timeout::Error
         end
@@ -48,9 +49,8 @@ class APIStatusesController < ApplicationController
         end
       end
 
-      App.logger.info "new note: #{n.activitystream_object.inspect}"
-
       n.save!
+      request.log_extras[:note] = n.id
     end
 
     json(n.timeline_object_for(@api_token.user))

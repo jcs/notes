@@ -16,7 +16,9 @@ class Note < DBModel
 
   validates_presence_of :contact
 
-  scope :timeline, -> { order("created_at DESC") }
+  scope :timeline, -> {
+    where(:for_timeline => true).order("created_at DESC")
+  }
 
   before_create :assign_conversation, :assign_ids
 
@@ -108,6 +110,10 @@ class Note < DBModel
     end
 
     to_fetch.each do |u,obj|
+      if QueueEntry.where(:note_id => dbnote.id, :object => obj).any?
+        next
+      end
+
       qe = QueueEntry.new
       qe.action = :attachment_fetch
       qe.note_id = dbnote.id
@@ -144,8 +150,8 @@ class Note < DBModel
     cc = []
     if self.is_public?
       if self.directed_at_someone?
-        mc = self.mentioned_contacts
-        to = mc.shift.actor
+        mc = self.mentioned_contacts.dup
+        to = [ mc.shift.actor ]
         cc = mc.map{|c| c.actor } +
           [ ActivityStream::PUBLIC_URI ]
       else
@@ -166,6 +172,7 @@ class Note < DBModel
       "to" => to,
       "cc" => cc,
       "context" => self.conversation,
+      "inReplyTo" => self.parent_note.try(:public_id),
       "attributedTo" => self.user.activitystream_actor,
       "content" => self.note,
       "url" => "#{self.user.activitystream_url}/#{self.id}",
@@ -199,8 +206,8 @@ class Note < DBModel
       raise "trying to publish a non-local note!"
     end
 
-    tos = (self.activitystream_object["to"] +
-      self.activitystream_object["cc"]).uniq
+    aobj = self.activitystream_object
+    tos = (aobj["to"] + aobj["cc"]).uniq
 
     to_contacts = []
     if tos.include?(ActivityStream::PUBLIC_URI)
@@ -303,12 +310,12 @@ class Note < DBModel
   def timeline_object_for(user)
     {
       "id" => self.id.to_s,
-      "created_at" => self.created_at.utc.iso8601,
+      "created_at" => self.created_at.try(:utc).try(:iso8601),
       "edited_at" => self.note_modified_at.try(:utc).try(:iso8601),
       "in_reply_to_id" => self.parent_note_id.try(:to_s),
       "in_reply_to_account_id" => self.parent_note_id.present? ?
         self.parent_note.contact_id.to_s : nil,
-      "sensitive" => !!object["sensitive"],
+      "sensitive" => object ? !!object["sensitive"] : false,
       "spoiler_text" => "",
       "visibility" => "public",
       "language" => "en",
