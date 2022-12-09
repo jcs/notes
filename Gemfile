@@ -4,8 +4,8 @@ ruby ">= 2.5.0"
 
 gem "rack"
 
-gem "sinatra"
-gem "sinatra-contrib"
+gem "sinatra", "< 3.0"
+gem "sinatra-contrib", "< 3.0"
 gem "erubis"
 
 gem "rack_csrf"
@@ -24,6 +24,7 @@ gem "json"
 gem "bcrypt"
 
 # for email and notification exceptions
+gem "mail", "~> 2.7.1" # https://github.com/mikel/mail/issues/1489
 gem "pony"
 
 # for development
@@ -37,5 +38,5 @@ gem "rack-test"
 
 # local
 gem "sanitize"
-gem "pledge"
+gem "pledge", :git => "https://github.com/jcs/ruby-pledge", :branch => :master
 gem "gd2-ffij"
