@@ -164,8 +164,10 @@ class Contact < DBModel
 
       asvm = ActivityStreamVerifiedMessage.new(self, i)
       if asvm
-        Note.ingest_note!(asvm)
-        ingested += 1
+        note, err = Note.ingest!(asvm)
+        if note != nil
+          ingested += 1
+        end
       end
     end
 

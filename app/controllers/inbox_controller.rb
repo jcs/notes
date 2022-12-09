@@ -8,42 +8,53 @@ class InboxController < ApplicationController
       halt 400, request.log_extras[:error]
     end
 
-    type = if asvm.message["object"]
+    object_type = if asvm.message["object"].is_a?(Hash)
       asvm.message["object"]["type"]
+    else
+      asvm.message["object"]
     end
 
     request.log_extras[:contact] = asvm.contact.id
     request.log_extras[:actor] = asvm.contact.actor
     request.log_extras[:message_type] = asvm.message["type"]
-    request.log_extras[:object_type] = type
+    request.log_extras[:object_type] = object_type
 
     case asvm.message["type"]
     when "Accept"
       # nothing to do
 
     when "Announce"
-      if (note = @user.contact.notes.where(:public_id =>
-      asvm.message["object"]).first)
-        note.forward_by!(asvm.contact)
-        request.log_extras[:note] = note.id
-        request.log_extras[:result] = "forwarded note"
+      note = Note.where(:public_id => asvm.message["object"]).first
+      if !note
+        note, err = Note.ingest_from_url!(asvm.message["object"])
+        if note == nil
+          request.log_extras[:error] = "failed ingesting note " <<
+            "#{asvm.message["object"]}: #{err}"
+          break
+        end
       end
+      note.forward_by!(asvm.contact)
+      request.log_extras[:note] = note.id
+      request.log_extras[:result] = "forwarded note"
 
     when "Create"
-      case type
+      case object_type
       when "Note"
-        if (note = Note.ingest_note!(asvm))
-          request.log_extras[:note] = note.id
-          request.log_extras[:result] =
-            "created #{note.is_public ? "public" : "private"} " <<
-            (note.for_timeline? ? "timeline" : "reply") << " note"
+        note, err = Note.ingest!(asvm)
+        if note == nil
+          request.log_extras[:error] = "failed ingesting note: #{err}"
+          break
         end
+        request.log_extras[:note] = note.id
+        request.log_extras[:result] =
+          "created #{note.is_public ? "public" : "private"} " <<
+          (note.for_timeline? ? "timeline" : "reply") << " note"
       else
-        request.log_extras[:error] = "unsupported Create for #{type}"
+        request.log_extras[:error] = "unsupported Create for #{object_type}"
       end
 
     when "Delete"
-      case type
+      case object_type
       when "Tombstone", "Note"
         if (note = asvm.contact.notes.
         where(:public_id => asvm.message["object"]["id"]).first)
@@ -56,21 +67,19 @@ class InboxController < ApplicationController
           f.destroy!
           request.log_extras[:result] = "unfollowed user"
         end
-      else
-        if asvm.message["object"] == asvm.contact.actor
-          if asvm.contact.local?
-            raise
-          end
-          asvm.contact.destroy!
-          request.log_extras[:result] = "deleted contact #{asvm.contact.actor}"
-        else
-          request.log_extras[:error] = "unsupported Delete for #{type}"
+      when asvm.contact.actor
+        if asvm.contact.local?
+          raise
         end
+        asvm.contact.destroy!
+        request.log_extras[:result] = "deleted contact #{asvm.contact.actor}"
+      else
+        request.log_extras[:error] = "unsupported Delete for #{object_type}"
       end
 
     when "Follow"
-      case type
-      when "Person", nil
+      case object_type
+      when "Person"
         @user.activitystream_gain_follower!(asvm.contact, asvm.message)
       else
         request.log_extras[:error] = "unsupported Follow for #{type}"
@@ -85,7 +94,8 @@ class InboxController < ApplicationController
       end
 
     when "Move"
-      if asvm.message["object"] == asvm.contact.actor
+      case object_type
+      when asvm.contact.actor
         asvm.contact.move_to!(asvm.message["target"])
         request.log_extras[:result] = "moved to #{asvm.message["target"]}"
       else
@@ -94,7 +104,7 @@ class InboxController < ApplicationController
       end
 
     when "Undo"
-      case type
+      case object_type
       when "Announce"
         if (note = @user.contact.notes.where(:public_id =>
         asvm.message["object"]["object"]).first)
@@ -121,9 +131,12 @@ class InboxController < ApplicationController
       end
 
     when "Update"
-      case type
+      case object_type
       when "Note"
-        if (note = Note.ingest_note!(asvm))
+        note, err = Note.ingest!(asvm)
+        if note == nil
+          request.log_extras[:error] = "failed ingesting note: #{err}"
+        else
           request.log_extras[:note] = note.id
           request.log_extras[:result] = "updated note"
         end
@@ -137,7 +150,7 @@ class InboxController < ApplicationController
       when "Question"
         # ignore
       else
-        request.log_extras[:error] = "unsupported Update for #{type}"
+        request.log_extras[:error] = "unsupported Update for #{object_type}"
       end
 
     else

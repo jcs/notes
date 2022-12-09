@@ -31,14 +31,14 @@ class Note < DBModel
 
   attr_accessor :like_count, :reply_count, :forward_count
 
-  def self.ingest_note!(asvm)
+  def self.ingest!(asvm)
     if !asvm.is_a?(ActivityStreamVerifiedMessage)
       raise "#{asvm.class} not a ActivityStreamVerifiedMessage"
     end
 
     note = asvm.message["object"]
     if !note || note["id"].blank?
-      raise "note has no id"
+      return nil, "note has no id"
     end
 
     dbnote = asvm.contact.notes.where(:public_id => note["id"]).first
@@ -47,13 +47,22 @@ class Note < DBModel
       dbnote.contact_id = asvm.contact.id
       dbnote.public_id = note["id"]
     end
-    dbnote.created_at = DateTime.parse(note["published"])
-    if note["updated"] && note["updated"] != note["published"]
-      dbnote.note_modified_at = DateTime.parse(note["updated"])
-    end
     dbnote.object = note
     dbnote.conversation = note["conversation"]
     dbnote.note = note["content"]
+
+    dbnote.created_at = DateTime.parse(note["published"])
+    if dbnote.created_at > Time.now
+      # so sorting by created_at works properly
+      dbnote.created_at = Time.now
+    end
+
+    if note["updated"] && note["updated"] != note["published"]
+      dbnote.note_modified_at = DateTime.parse(note["updated"])
+    end
+    if dbnote.note_modified_at && dbnote.note_modified_at > Time.now
+      dbnote.note_modified_at = Time.now
+    end
 
     tos = (note["to"].is_a?(Array) ? note["to"] : [ note["to"] ])
     ccs = (note["cc"].is_a?(Array) ? note["cc"] : [ note["cc"] ])
@@ -121,7 +130,25 @@ class Note < DBModel
       qe.save!
     end
 
-    dbnote
+    return dbnote, nil
+  end
+
+  def self.ingest_from_url!(url)
+    obj, err = ActivityStream.get_json(url)
+    if obj == nil
+      return nil, err
+    end
+
+    c = Contact.where(:actor => obj["attributedTo"]).first
+    if !c
+      c, err = Contact.refresh_for_actor(obj["attributedTo"])
+      if c == nil
+        return nil, "failed to get note actor #{obj["attributedTo"]}: #{err}"
+      end
+    end
+
+    asvm = ActivityStreamVerifiedMessage.new(c, { "object" => obj })
+    Note.ingest!(asvm)
   end
 
   def activitystream_activity_object(verb)
