@@ -88,8 +88,9 @@ class InboxController < ApplicationController
 
     when "Follow"
       case object_type
-      when "Person"
+      when @user.contact.actor
         @user.activitystream_gain_follower!(asvm.contact, asvm.message)
+
       else
         request.log_extras[:error] = "unsupported Follow for #{object_type}"
       end
