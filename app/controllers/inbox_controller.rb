@@ -13,13 +13,22 @@ class InboxController < ApplicationController
     else
       asvm.message["object"]
     end
+    type = asvm.message["type"]
 
     request.log_extras[:contact] = asvm.contact.id
     request.log_extras[:actor] = asvm.contact.actor
     request.log_extras[:message_type] = asvm.message["type"]
     request.log_extras[:object_type] = object_type
+    request.log_extras[:foreign] = asvm.foreign
 
-    case asvm.message["type"]
+    # TODO: remove this once we can verify RsaSignature2017
+    if asvm.foreign && !(type == "Create" && object_type == "Note")
+      request.log_extras[:error] = "ignoring foreign #{type} message " <<
+        "for #{object_type} forwarded by #{asvm.message["actor"]}"
+      return [ 201, "got it" ]
+    end
+
+    case type
     when "Accept"
       # nothing to do
 
@@ -82,7 +91,7 @@ class InboxController < ApplicationController
       when "Person"
         @user.activitystream_gain_follower!(asvm.contact, asvm.message)
       else
-        request.log_extras[:error] = "unsupported Follow for #{type}"
+        request.log_extras[:error] = "unsupported Follow for #{object_type}"
       end
 
     when "Like"
@@ -127,7 +136,7 @@ class InboxController < ApplicationController
           request.log_extras[:result] = "unfollowed"
         end
       else
-        request.log_extras[:error] = "unsupported Undo for #{type}"
+        request.log_extras[:error] = "unsupported Undo for #{object_type}"
       end
 
     when "Update"
@@ -154,9 +163,10 @@ class InboxController < ApplicationController
       end
 
     else
-      request.log_extras[:error] = "unsupported #{asvm.message["type"]} action"
+      request.log_extras[:error] = "unsupported #{type} action for " <<
+        "#{object_type}"
     end
 
-    "got it"
+    [ 201, "got it" ]
   end
 end

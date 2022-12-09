@@ -157,6 +157,8 @@ class ActivityStream
       return nil, "signature not verified for contact #{cont.actor} key: #{err}"
     end
 
+    foreign = false
+
     if js["actor"] != cont.actor
       ocont = Contact.where(:actor => js["actor"]).first
       if !ocont
@@ -176,11 +178,15 @@ class ActivityStream
       # message/reply:
       # https://socialhub.activitypub.rocks/t/making-sense-of-rsasignature2017/347
       # https://gist.github.com/marnanel/ba6cba944d1f12d705891b1f7a7808d6
-      # for now, just assume everyone is being nice
+      # for now, just mark it foreign so the caller can handle it accordingly
+      foreign = true
+
       cont = ocont
     end
 
-    return ActivityStreamVerifiedMessage.new(cont, js), nil
+    asvm = ActivityStreamVerifiedMessage.new(cont, js)
+    asvm.foreign = foreign
+    return asvm, nil
 
   rescue => e
     return nil, "failed verifying HTTP signature: #{e.message}"
@@ -199,10 +205,12 @@ end
 class ActivityStreamVerifiedMessage
   attr_reader :contact
   attr_reader :message
+  attr_accessor :foreign
 
   def initialize(contact, message)
     @contact = contact
     @message = message
+    @foreign = false
 
     if message["@context"].present?
       if !message["@context"].is_a?(Array)
