@@ -19,14 +19,18 @@ module Rack
 
   private
     def email(exception, env)
+      b = body(exception, env)
+
       if App.exception_recipients.any?
         Pony.mail(
           :to => App.exception_recipients,
           :subject => "[#{App.name}] #{exception.class} exception " <<
             "(#{exception.message[0, 50]})",
-          :body => body(exception, env)
+          :body => b
         )
       end
+
+      STDERR.puts b
     end
 
     def first_app_call(exception)
