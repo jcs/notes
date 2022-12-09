@@ -17,4 +17,5 @@
 
 P=`dirname $0`
 
-bundle exec irb -I $P/.. -r $P/../lib/app.rb
+bundle exec irb -I $P/.. -r $P/../lib/irb_silence.rb -r $P/../lib/app.rb \
+	--nocolorize --noautocomplete
