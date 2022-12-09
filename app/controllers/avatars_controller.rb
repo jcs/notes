@@ -1,7 +1,7 @@
 class AvatarsController < ApplicationController
   self.path = "#{App.base_path}/avatars"
 
-  DEFAULT_AVATAR = "iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAQMAAACQp+OdAAAABlBMVEUAAAD///+l2Z/dAAAAaklEQVQoz63RwQmAMAwF0ECvhYzU1bOBqzhA4BsVJb8VKmgufYekkB+RoRrsNygIzQRYGQVwhgLIgLWATRBv/JjhtSpj7HmcWhjvpqxD37NvzHDxUpSBc50pJCOSO6K7IWcqCX4d9xuG2gAIUwjcjcJ9hQAAAABJRU5ErkJggg=="
+  DEFAULT_AVATAR = "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAQAAAAAYLlVAAAAtklEQVRo3u1ZWw6AMAwqxoN7c/w1Rl2dU7eW/S2+KIFSM9hiv67Jfl6zmRkLNyEyAwIgAAIwt3oRK3tIfwzA0Rk9le+vI6QG7jKFUAyw8hl0zwBfqv6MBbXi8VzABh/d6mDsTogLdR/t42cBK/QiG8Z3AQtTVg4XUCJM5QJvBsR2AYfXANK7gE4mUJj5t/scWeCdivRnFEcDT/NjPAbYuPo+GcBHlffLAA+Q68xIAAQgfhoiMwMrU+ctHbfyUzMAAAAASUVORK5CYII="
 
   get "/:address" do
     c = Contact.where(:address => params[:address]).first
