@@ -94,6 +94,7 @@ end
 class Sponge
   MAX_TIME = 60
   MAX_DNS_TIME = 10
+  MAX_KEEP_ALIVE_TIME = 30
 
   @@KEEP_ALIVES = {}
 
@@ -145,27 +146,49 @@ class Sponge
     @KEEP_ALIVES = {}
   end
 
-  def find_keep_alive_for(host)
-    if self.use_private_keepalives
-      return @KEEP_ALIVES[host]
-    else
-      return @@KEEP_ALIVES[host]
+  def close_stale_keep_alives
+    [ @KEEP_ALIVES, @@KEEP_ALIVES ].each do |ka|
+      ka.keys.each do |h|
+        if Time.now - ka[h][:last] > MAX_KEEP_ALIVE_TIME
+          begin
+            ka[h][:obj].finish
+          rescue IOError
+          end
+          ka.delete(h)
+        end
+      end
     end
   end
 
-  def save_keep_alive(host, obj)
+  def find_keep_alive_for(host)
+    where = @@KEEP_ALIVES
     if self.use_private_keepalives
-      if obj == nil
-        @KEEP_ALIVES.delete(host)
-      else
-        @KEEP_ALIVES[host] = obj
+      where = @KEEP_ALIVES
+    end
+
+    if !where[host]
+      return nil
+    end
+
+    return where[host][:obj]
+  end
+
+  def save_keep_alive(host, obj)
+    where = @@KEEP_ALIVES
+    if self.use_private_keepalives
+      where = @KEEP_ALIVES
+    end
+
+    if obj == nil
+      if where[host]
+        begin
+          where[host][:obj].finish
+        rescue IOError
+        end
+        where.delete(host)
       end
     else
-      if obj == nil
-        @@KEEP_ALIVES.delete(host)
-      else
-        @@KEEP_ALIVES[host] = obj
-      end
+      where[host] = { :last => Time.now, :obj => obj }
     end
   end
 
@@ -447,6 +470,8 @@ class Sponge
     if self.keep_alive
       self.save_keep_alive(uri.host, host)
     end
+
+    self.close_stale_keep_alives
 
     case res
     when Net::HTTPRedirection
