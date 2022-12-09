@@ -1,23 +1,32 @@
 <% dedicated = false if !(defined?(dedicated) && dedicated) %>
 <article class="note <%= dedicated ? "dedicated" : "" %>" id="<%= note.id %>">
-  <a href="<%= note.contact.url %>">
+  <a href="<%= note.contact.url %>" target="_blank" rel="nofollow noreferrer">
     <img class="avatar <%= note.contact.user_id ? "local" : "" %>"
       src="<%= App.base_url %>/avatars/<%= h note.contact.address %>"
       width=50 height=50>
   </a>
 
   <span class="realname">
-    <a href="<%= note.contact.url %>"><%= h note.contact.realname %></a>
+    <a href="<%= note.contact.url %>" target="_blank" rel="nofollow noreferrer">
+      <%= h note.contact.realname %>
+    </a>
   </span>
   <span class="username">
-    <a href="<%= note.contact.url %>">@<%= h note.contact.address %></a>
+    <a href="<%= note.contact.url %>" target="_blank" rel="nofollow noreferrer">
+      @<%= h note.contact.address %>
+    </a>
   </span>
   <span class="dash">
     -
   </span>
   <span class="date" title="<%= note.created_at.strftime("%Y-%m-%d %H:%M:%S") %>">
-    <a href="<%= h(note.authoritative_url) %>">
+    <a href="<%= h(note.authoritative_url) %>" target="_blank"
+    rel="nofollow noreferrer">
       <%= short_time_ago(note.created_at) %>
+
+      <% if note.note_modified_at %>
+        (edited <%= short_time_ago(note.note_modified_at) %>)
+      <% end %>
     </a>
   </span>
 
@@ -35,7 +44,8 @@
     <% end %>
 
     <div class="full_date">
-      <a href="<%= note.authoritative_url %>">
+      <a href="<%= note.authoritative_url %>" target="_blank"
+      rel="nofollow noreferrer">
         <%= note.created_at.strftime("%H:%M - %B %e, %Y") %>
       </a>
     </div>
