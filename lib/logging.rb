@@ -57,8 +57,13 @@ module Sinatree
         "format=#{output_format}",
         "status=#{status}",
         "duration=#{sprintf("%0.2f", Time.now.to_f - began_at)}",
-        "params=#{App.filter_parameters(request.params).inspect}",
       ]
+
+      if (300..399).include?(status)
+        msg << "location=#{headers["Location"]}"
+      end
+
+      msg << "params=#{App.filter_parameters(request.params).inspect}"
 
       request.log_extras.each do |k,v|
         msg << "#{k}=#{v}"
