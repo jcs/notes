@@ -142,15 +142,7 @@ class ActivityStream
 
       # assume the keyid will point to the actor url, maybe with some fragment
 
-      # try to fetch it within a second so we can process this request,
-      # otherwise we'll have to queue it up and wait for a retry of this
-      # request
-      begin
-        Timeout.timeout(1.5) do
-          Contact.refresh_for_actor(comps["keyId"])
-        end
-      rescue Timeout::Error
-      end
+      Contact.refresh_for_actor_with_timeout(comps["keyId"])
 
       cont = Contact.where(:key_id => comps["keyId"]).first
       if !cont
@@ -168,12 +160,7 @@ class ActivityStream
     if js["actor"] != cont.actor
       ocont = Contact.where(:actor => js["actor"]).first
       if !ocont
-        begin
-          Timeout.timeout(1.5) do
-            Contact.refresh_for_actor(js["actor"])
-          end
-        rescue Timeout::Error
-        end
+        Contact.refresh_for_actor_with_timeout(js["actor"])
 
         ocont = Contact.where(:actor => js["actor"]).first
         if !ocont

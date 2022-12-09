@@ -81,6 +81,17 @@ class Contact < DBModel
     return contact, nil
   end
 
+  def self.refresh_for_actor_with_timeout(actor, timeout = 1.5)
+    begin
+      Timeout.timeout(timeout) do
+        return Contact.refresh_for_actor(actor)
+      end
+    rescue Timeout::Error
+    end
+
+    return nil, "timed out"
+  end
+
   def activitystream_get_json_ld
     if !@_asld
       @_asld, err = ActivityStream.get_json_ld(self.actor)
