@@ -342,15 +342,11 @@ class Note < DBModel
   end
 
   def unforward_by!(contact)
-    if (l = self.forwards.where(:contact_id => contact.id).first)
-      l.destroy
-    end
+    self.forwards.where(:contact_id => contact.id).destroy_all
   end
 
   def unlike_by!(contact)
-    if (l = self.likes.where(:contact_id => contact.id).first)
-      l.destroy
-    end
+    self.likes.where(:contact_id => contact.id).destroy_all
   end
 
   def url

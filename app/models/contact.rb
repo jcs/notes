@@ -260,12 +260,12 @@ class Contact < DBModel
         return nil, "failed fetching #{self.object["icon"]["url"]}: #{err}"
       end
       if self.avatar
-        self.avatar.destroy
+        self.avatar.destroy!
       end
       self.avatar = av
       self.save!
     elsif self.avatar
-      self.avatar.destroy
+      self.avatar.destroy!
       self.avatar_attachment_id = nil
       self.save!
     end

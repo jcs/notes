@@ -47,17 +47,25 @@ class InboxController < ApplicationController
       when "Tombstone", "Note"
         if (note = asvm.contact.notes.
         where(:public_id => asvm.message["object"]["id"]).first)
-          note.destroy
+          note.destroy!
           request.log_extras[:note] = note.id
           request.log_extras[:result] = "deleted note"
         end
       when "User"
         if (f = @user.followers.where(:contact_id => asvm.contact.id).first)
-          f.destroy
+          f.destroy!
           request.log_extras[:result] = "unfollowed user"
         end
       else
-        request.log_extras[:error] = "unsupported Delete for #{type}"
+        if asvm.message["object"] == asvm.contact.actor
+          if asvm.contact.local?
+            raise
+          end
+          asvm.contact.destroy!
+          request.log_extras[:result] = "deleted contact #{asvm.contact.actor}"
+        else
+          request.log_extras[:error] = "unsupported Delete for #{type}"
+        end
       end
 
     when "Follow"
@@ -105,7 +113,7 @@ class InboxController < ApplicationController
 
       when "Follow"
         if (f = @user.followers.where(:contact_id => asvm.contact.id).first)
-          f.destroy
+          f.destroy!
           request.log_extras[:result] = "unfollowed"
         end
       else
