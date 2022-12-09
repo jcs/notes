@@ -325,3 +325,26 @@ fieldset .error_hint {
 	margin-left: 1em;
 	color: #c43c35;
 }
+
+@media (prefers-color-scheme: dark) {
+	.follow_button {
+		background-color: #555;
+		border-color: #333;
+	}
+	.notes_counters a {
+		color: #888;
+	}
+	article.note {
+		border-color: #333;
+	}
+	article.note:hover {
+		background-color: transparent;
+	}
+	.note .realname a {
+		color: #888;
+	}
+	.note_vanity, .note_vanity a, .note_vanity svg {
+		fill: #555;
+		color: #555;
+	}
+}
