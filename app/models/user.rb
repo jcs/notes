@@ -24,11 +24,11 @@ class User < DBModel
       return nil
     end
 
-    if m[2] != App.domain
+    if m[2].downcase != App.domain.downcase
       return nil
     end
 
-    User.where(:username => m[1]).first
+    User.where("lower(username) = ?", m[1].downcase).first
   end
 
   def address
