@@ -204,12 +204,14 @@ class ActivityStreamVerifiedMessage
     @contact = contact
     @message = message
 
-    if !message["@context"].is_a?(Array)
-      message["@context"] = [ message["@context"] ]
-    end
+    if message["@context"].present?
+      if !message["@context"].is_a?(Array)
+        message["@context"] = [ message["@context"] ]
+      end
 
-    if !message["@context"].include?(ActivityStream::NS)
-      raise "bogus message context #{message["@context"].inspect}"
+      if !message["@context"].include?(ActivityStream::NS)
+        raise "bogus message context #{message["@context"].inspect}"
+      end
     end
   end
 end
