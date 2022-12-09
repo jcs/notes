@@ -352,7 +352,7 @@ class Note < DBModel
       "reblogs_count" => self.forward_count,
       "favourites_count" => self.like_count,
       "favourited" => user.likes.where(:note_id => self.id).any?,
-      #"reblogged" => false,
+      "reblogged" => user.contact.forwards.where(:note_id => self.id).any?,
       #"muted" => false,
       #"bookmarked" => false,
       "content" => self.note,
