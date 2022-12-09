@@ -120,6 +120,10 @@ class Contact < DBModel
   end
 
   def ingest_recent_notes!
+    if self.local?
+      return nil, "is local"
+    end
+
     if self.recently_refreshed?
       return nil, "recently refreshed"
     end

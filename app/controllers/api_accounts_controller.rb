@@ -29,8 +29,22 @@ class APIAccountsController < ApplicationController
     contact.timeline_object.to_json
   end
 
-  get "/:id/following" do
+  get "/:id/followers" do
+    if params[:id] != @api_token.user.contact.id.to_s
+      halt 404
+    end
 
+    json(@api_token.user.followers.
+      includes(:contact).map{|f| f.contact.timeline_object })
+  end
+
+  get "/:id/following" do
+    if params[:id] != @api_token.user.contact.id.to_s
+      halt 404
+    end
+
+    json(@api_token.user.followings.
+      includes(:contact).map{|f| f.contact.timeline_object })
   end
 
   get "/:id/statuses" do
@@ -44,7 +58,9 @@ class APIAccountsController < ApplicationController
       return [].to_json
     end
 
-    contact.ingest_recent_notes!
+    if !contact.local?
+      contact.ingest_recent_notes!
+    end
 
     scope = Note.where(:contact_id => contact.id).includes(:contact).
       order("created_at DESC").limit(20)
