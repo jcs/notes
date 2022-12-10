@@ -335,7 +335,7 @@ class Note < DBModel
   end
 
   def timeline_object_for(user)
-    {
+    ret = {
       "id" => self.id.to_s,
       "created_at" => self.created_at.try(:utc).try(:iso8601),
       "edited_at" => self.note_modified_at.try(:utc).try(:iso8601),
@@ -353,8 +353,8 @@ class Note < DBModel
       "favourites_count" => self.like_count,
       "favourited" => user.likes.where(:note_id => self.id).any?,
       "reblogged" => user.contact.forwards.where(:note_id => self.id).any?,
-      #"muted" => false,
-      #"bookmarked" => false,
+      "muted" => false,
+      "bookmarked" => false,
       "content" => self.note,
       "reblog" => nil,
       "media_attachments" => self.attachments.map(&:timeline_object),
@@ -366,6 +366,16 @@ class Note < DBModel
       "pinned" => false,
       "account" => self.contact.timeline_object,
     }
+
+    forward_contact = self.forwarded_by_follows_of(user).first
+    if forward_contact
+      ret["reblog"] = ret.dup
+      ret["id"] = self.forwards.where(:contact_id => forward_contact.id).
+        first.id.to_s
+      ret["account"] = forward_contact.timeline_object
+    end
+
+    ret
   end
 
   def unforward_by!(contact)

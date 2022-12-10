@@ -14,8 +14,11 @@ class APITimelinesController < ApplicationController
     if params[:max_id]
       tl = tl.where("id < ?", params[:max_id])
     end
+    if params[:min_id]
+      tl = tl.where("id > ?", params[:min_id])
+    end
 
-    tl.map{|n| n.timeline_object_for(@api_token.user) }.to_json
+    json(tl.map{|n| n.timeline_object_for(@api_token.user) })
   end
 
   get "/public" do
