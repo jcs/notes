@@ -198,8 +198,8 @@ class Contact < DBModel
     end
   end
 
-  def realname_or_address
-    self.realname.to_s == "" ? self.address : self.realname
+  def realname_or_username
+    self.realname.to_s == "" ? self.username : self.realname
   end
 
   def recently_refreshed?

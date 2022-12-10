@@ -51,6 +51,12 @@ article.note:hover {
 	background-color: #f5f5f5;
 }
 
+.note_forwarded {
+	font-size: 9pt;
+	margin-left: -66px;
+	margin-bottom: 0.5em;
+}
+
 .note img.avatar {
 	float: left;
 	margin-left: -66px;
@@ -112,7 +118,6 @@ article.note:hover {
 	width: 141px;
 	height: 141px;
 }
-.note .note_text img,
 .note .note_attachments_count_1 .note_attachment img {
 	object-fit: contain;
 	object-position: 0 0;
@@ -155,12 +160,15 @@ article.note:hover {
 }
 .note_vanity,
 .note_vanity a,
-.note_vanity svg {
+.note_vanity svg,
+.note_forwarded a,
+.note_forwarded svg {
     color: #bbb;
     fill: #bbb;
     text-decoration: none;
 }
-.note_vanity svg {
+.note_vanity svg,
+.note_forwarded svg {
     display: table-cell;
     height: 1.2em;
     width: 1.2em;
@@ -343,7 +351,11 @@ fieldset .error_hint {
 	.note .realname a {
 		color: #888;
 	}
-	.note_vanity, .note_vanity a, .note_vanity svg {
+	.note_vanity,
+	.note_vanity a,
+	.note_vanity svg,
+	.note_forwarded a,
+	.note_forwarded svg {
 		fill: #555;
 		color: #555;
 	}

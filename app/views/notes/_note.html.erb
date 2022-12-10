@@ -1,5 +1,26 @@
 <% dedicated = false if !(defined?(dedicated) && dedicated) %>
 <article class="note <%= dedicated ? "dedicated" : "" %>" id="<%= note.id %>">
+  <% if defined?(include_forward) && include_forward &&
+  (forward_contact = note.forwarded_by_follows_of(@user).first) %>
+    <div class="note_forwarded">
+      <svg viewBox="0 0 336 336" xmlns="http://www.w3.org/2000/svg">
+        <path d="m49.207 286.8c-65.609-65.605-65.609-171.98 0-237.59 65.605-65.609 171.98-65.609 237.59 0 65.609 65.605 65.609 171.98 0 237.59-65.605 65.609-171.98 65.609-237.59 0zm186.05-172.45c0.0508-7.7227-6.1836-13.922-13.961-13.852l-92.586 0.83594c-14.922 0.0156-14.945 22.391-0.0234 22.375l62.34-0.0898c3.0703-4e-3 3.7734 1.7773 1.5938 3.957l-86.125 86.125c-4.3867 4.3828-4.4336 11.445-0.0351 15.844 4.3633 4.3633 11.449 4.3555 15.84-0.0352l86.129-86.129c2.1875-2.1875 3.9609-1.4648 3.9531 1.5938l-0.0899 62.34c-0.0195 14.922 22.359 14.902 22.375-0.0195z"/>
+      </svg>
+      <span class="realname">
+        <a href="<%= forward_contact.url %>" target="_blank"
+        rel="nofollow noreferrer">
+          <%= h forward_contact.realname_or_username %>
+        </a>
+      </span>
+      <span class="username">
+        <a href="<%= forward_contact.url %>" target="_blank"
+        rel="nofollow noreferrer">
+          @<%= h forward_contact.address %>
+        </a>
+      </span>
+    </div>
+  <% end %>
+
   <a href="<%= note.contact.url %>" target="_blank" rel="nofollow noreferrer">
     <img class="avatar <%= note.contact.user_id ? "local" : "" %>"
       src="<%= App.base_url %>/avatars/<%= h note.contact.address %>"
@@ -8,7 +29,7 @@
 
   <span class="realname">
     <a href="<%= note.contact.url %>" target="_blank" rel="nofollow noreferrer">
-      <%= h note.contact.realname %>
+      <%= h note.contact.realname_or_username %>
     </a>
   </span>
   <span class="username">

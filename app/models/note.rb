@@ -275,6 +275,13 @@ class Note < DBModel
     end
   end
 
+  def forwarded_by_follows_of(user)
+    user.followings.includes(:contact).
+      where(:contact_id => self.forwards.pluck(:contact_id)).
+      order("created_at ASC").
+      map{|f| f.contact }.uniq
+  end
+
   def forward_count
     @forward_count ||= self.forwards.count
   end

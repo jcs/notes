@@ -10,7 +10,8 @@
 <% end %>
 
 <% @notes.each do |note| %>
-  <%= partial "../notes/note", :locals => { :note => note } %>
+  <%= partial "../notes/note", :locals => { :note => note,
+    :include_forward => true } %>
 <% end %>
 
 <%= partial "../home/page_links" %>
