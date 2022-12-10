@@ -19,7 +19,7 @@ class WebFinger
           url = template
         end
       end
-    rescue => e
+    rescue StandardError, Timeout::Error => e
     end
 
     if !url
@@ -44,7 +44,7 @@ class WebFinger
 
       return res.json, nil
 
-    rescue => e
+    rescue StandardError, Timeout::Error => e
       return nil, "failed webfingering #{url.inspect}: #{e.message}"
     end
   end

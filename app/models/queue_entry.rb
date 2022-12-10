@@ -39,7 +39,7 @@ class QueueEntry < DBModel
         else
           raise "returned status #{ret.status}"
         end
-      rescue => e
+      rescue StandardError, Timeout::Error => e
         return false, "failed POSTing to #{qe.contact.inbox}: #{e.message}"
       end
     },

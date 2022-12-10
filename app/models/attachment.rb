@@ -28,9 +28,13 @@ class Attachment < DBModel
     a = Attachment.new
     a.source = url
 
-    res = ActivityStream.fetch(uri: url, method: :get)
-    if !res.ok? || res.body.to_s == ""
-      return nil, "failed fetching attachment #{url}: #{res.status}"
+    begin
+      res = ActivityStream.fetch(uri: url, method: :get)
+      if !res.ok? || res.body.to_s == ""
+        return nil, "failed fetching attachment #{url}: #{res.status}"
+      end
+    rescue Timeout::Error
+      return nil, "failed fetching attachment #{url}: timed out"
     end
 
     a.build_blob
