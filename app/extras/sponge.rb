@@ -433,6 +433,8 @@ class Sponge
           Net::HTTP::Delete.new(path, headers)
         when :get
           Net::HTTP::Get.new(path, headers)
+        when :head
+          Net::HTTP::Head.new(path, headers)
         when :options
           Net::HTTP::Options.new(path, headers)
         when :post

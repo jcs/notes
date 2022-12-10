@@ -29,33 +29,46 @@ class Attachment < DBModel
     a.source = url
 
     begin
-      res = ActivityStream.fetch(uri: url, method: :get)
-      if !res.ok? || res.body.to_s == ""
-        return nil, "failed fetching attachment #{url}: #{res.status}"
+      res = ActivityStream.fetch(uri: url, method: :head)
+      if !res.ok?
+        return nil, "failed querying attachment #{url}: #{res.status}"
       end
     rescue Timeout::Error
-      return nil, "failed fetching attachment #{url}: timed out"
+      return nil, "failed querying attachment #{url}: timed out"
     end
 
-    a.build_blob
-    a.blob.data = res.body
     a.type = res.headers["Content-Type"]
-    a.infer_size!
+
+    if a.image?
+      begin
+        res = ActivityStream.fetch(uri: url, method: :get)
+        if !res.ok? || res.body.to_s == ""
+          return nil, "failed fetching attachment #{url}: #{res.status}"
+        end
+      rescue Timeout::Error
+        return nil, "failed fetching attachment #{url}: timed out"
+      end
+
+      a.build_blob
+      a.blob.data = res.body
+      a.infer_size!
+    end
+
     return a, nil
   end
 
   def self.fetch_for_queue_entry(qe)
     at, err = Attachment.build_from_url(qe.object["url"])
     if !at
-      return false, "[q#{qe.id}] [n#{note.id}] failed fetching " <<
-        "attachment at #{url.inspect}"
+      return false, "[q#{qe.id}] [n#{qe.note_id}] failed fetching " <<
+        "attachment at #{qe.object["url"].inspect}: #{err}"
     end
     at.summary = qe.object["summary"]
     at.note_id = qe.note_id
     at.save!
 
     App.logger.info "[q#{qe.id}] [n#{qe.note_id}] [a#{at.id}] fetched " <<
-      "attachment of size #{at.blob.data.bytesize}"
+      "attachment"
 
     return true, nil
   end
@@ -89,7 +102,7 @@ class Attachment < DBModel
   end
 
   def image?
-    [ TYPES[:jpeg], TYPES[:png], TYPES[:gif] ].include?(self.type)
+    !!self.type.match(/\Aimage\//)
   end
 
   def infer_size!
@@ -156,16 +169,18 @@ class Attachment < DBModel
           :y => 0.0,
         },
         :original => {
-          :width => self.width,
-          :height => self.height,
-          :size => "#{self.width}x#{self.height}",
-          :aspect => (self.width / self.height.to_f),
+          :width => self.width.to_i,
+          :height => self.height.to_i,
+          :size => "#{self.width.to_i}x#{self.height.to_i}",
+          :aspect => (self.height.to_i > 0 ? (self.width / self.height.to_f) :
+            1.0),
         },
         :small => {
-          :width => self.width,
-          :height => self.height,
-          :size => "#{self.width}x#{self.height}",
-          :aspect => (self.width / self.height.to_f),
+          :width => self.width.to_i,
+          :height => self.height.to_i,
+          :size => "#{self.width.to_i}x#{self.height.to_i}",
+          :aspect => (self.height.to_i > 0 ? (self.width / self.height.to_f) :
+            1.0),
         },
       },
       :description => self.summary.to_s,
@@ -188,6 +203,6 @@ class Attachment < DBModel
   end
 
   def video?
-    self.type == TYPES[:video]
+    !!self.type.match(/\Avideo\//)
   end
 end
