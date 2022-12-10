@@ -104,7 +104,7 @@ class Contact < DBModel
   end
 
   def avatar_url
-    "#{App.base_url}/avatars/#{self.address}"
+    "#{App.base_url}/avatars/#{self.id}"
   end
 
   def header_url

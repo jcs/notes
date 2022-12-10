@@ -23,7 +23,7 @@
 
   <a href="<%= note.contact.url %>" target="_blank" rel="nofollow noreferrer">
     <img class="avatar <%= note.contact.user_id ? "local" : "" %>"
-      src="<%= App.base_url %>/avatars/<%= h note.contact.address %>"
+      src="<%= App.base_url %>/avatars/<%= h note.contact.id %>"
       width=50 height=50>
   </a>
 
