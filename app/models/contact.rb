@@ -213,11 +213,11 @@ class Contact < DBModel
 
   def relationship_object_with(user)
     {
-      "id" => self.id,
-      "following" => user.followers.where(:contact_id => self.id).any?,
+      "id" => self.id.to_s,
+      "following" => user.followings.where(:contact_id => self.id).any?,
       "showing_reblogs" => true,
       "notifying" => false,
-      "followed_by" => user.followings.where(:contact_id => self.id).any?,
+      "followed_by" => user.followers.where(:contact_id => self.id).any?,
       "blocking" => false,
       "blocked_by" => false,
       "muting" => false,

@@ -29,6 +29,23 @@ class APIAccountsController < ApplicationController
     contact.timeline_object.to_json
   end
 
+  post "/:id/follow" do
+    contact = Contact.where(:id => params[:id]).first
+    if !contact
+      halt 404, {}
+    end
+
+    f = @api_token.user.followings.where(:contact_id => contact.id).first
+    if !f
+      ret, err = @api_token.user.activitystream_follow!(contact.actor)
+      if ret == nil
+        raise 400
+      end
+    end
+
+    json(contact.relationship_object_with(@api_token.user))
+  end
+
   get "/:id/followers" do
     if params[:id] != @api_token.user.contact.id.to_s
       halt 404
@@ -70,5 +87,16 @@ class APIAccountsController < ApplicationController
     end
 
     scope.map{|n| n.timeline_object_for(@api_token.user) }.to_json
+  end
+
+  post "/:id/unfollow" do
+    f = @api_token.user.followings.where(:contact_id => params[:id]).first
+    if !f
+      halt 404
+    end
+
+    ret, err = f.unfollow!
+
+    json(f.contact.relationship_object_with(@api_token.user))
   end
 end

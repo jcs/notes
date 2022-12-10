@@ -5,7 +5,7 @@ class Following < DBModel
   def unfollow!
     msg = {
       "@context" => ActivityStream::NS,
-      "id" => "#{self.activitystream_actor}#undo-follow-#{Time.now.to_f}",
+      "id" => "#{self.user.activitystream_actor}#undo-follow-#{Time.now.to_f}",
       "type" => "Undo",
       "actor" => self.user.activitystream_actor,
       "object" => self.follow_object,
