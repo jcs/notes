@@ -5,6 +5,36 @@ Mastodon, developed on top of
 [sinatree](https://github.com/jcs/sinatree).
 
 This is a work in progress.
+It currently supports the following things:
+
+- SQLite backend
+- Simple queue daemon for making HTTP requests out-of-band
+- Web display and pagination of local notes
+- Importing of Twitter API JSON output
+- Following remote users, responding to follow requests, broadcasting of new
+  note creation
+- Processing of foreign note creation, undos, forwards, etc.
+- Local caching of remote avatars and image attachments
+- HTTP request signing and verification of incoming signed requests (works with
+  strict servers like GoToSocial)
+- Enough of the Mastodon API implemented to have basic functionality with 3rd
+  party clients like Metatext including web-based OAuth flow, image
+  uploading/attaching; though many clients other than Metatext do not support
+  API endpoints at subdirectories (`/notes/api/v1/...` instead of `/api/v1/...`)
+
+It does not support the following things:
+
+- Inline RsaSignature2017 verification (see
+  [this](https://socialhub.activitypub.rocks/t/making-sense-of-rsasignature2017/347)
+  and
+  [this](https://gist.github.com/marnanel/ba6cba944d1f12d705891b1f7a7808d6))
+- Tags
+- Custom emoji
+- Polls
+- Web-based note creation
+- Queue-based inbox
+- Many of Mastodon's less-critical API endpoints like advanced searching,
+  notifications, messages, bookmarks
 
 ### Usage
 
