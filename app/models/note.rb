@@ -104,12 +104,12 @@ class Note < DBModel
     to_delete = {}
 
     have.each do |h|
-      if !want.select{|a| a["url"] }.include?(h.source)
+      if !want.map{|a| a["url"] }.include?(h.source)
         to_delete[h.id] = true
       end
     end
     want.each do |obj|
-      if !have.select{|a| a.source }.include?(obj["url"])
+      if !have.map{|a| a.source }.include?(obj["url"])
         to_fetch[obj["url"]] = obj
       end
     end
