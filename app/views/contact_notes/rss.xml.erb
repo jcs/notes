@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0" xml:base="<%= App.base_url %>">
+  <channel>
+    <title><%= h App.site_title %> - <%= h @title %></title>
+    <link><%= App.base_url %>/from/timeline</link>
+    <% @notes.each do |note| %>
+      <item>
+        <title><%= h note.contact.realname_or_username %></title>
+        <link><%= h note.url %></link>
+        <author><%= h note.contact.realname_or_username %></author>
+        <pubDate><%= h (note.note_modified_at || note.created_at).rfc2822 %></pubDate>
+        <guid><%= h note.public_id %></guid>
+        <description><%= h(partial "../notes/note",
+          :locals => { :note => note, :include_forward => true })
+          %></description>
+      </item>
+    <% end %>
+  </channel>
+</rss>

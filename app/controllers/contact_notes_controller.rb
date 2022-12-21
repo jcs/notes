@@ -5,12 +5,18 @@ class ContactNotesController < ApplicationController
   EVERYONE = "everyone"
   TIMELINE = "timeline"
 
-  get "/:address" do
+  get "/:address(.:format)?" do
     find_contact
     find_pages
     @notes = @scope.order("id DESC").limit(PER_PAGE)
     @page = 1
-    erb :index
+
+    if params[:format] == "rss"
+      content_type "application/rss+xml"
+      erb :"rss.xml", :layout => nil
+    else
+      erb :index
+    end
   end
 
   get "/:address/page/:page" do
