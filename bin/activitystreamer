@@ -17,12 +17,14 @@ busies = 0
 
 begin
   while true do
-    QueueEntry.where("next_try_at <= ?", Time.now).each do |qe|
+    outstanding = QueueEntry.where("next_try_at <= ?", Time.now)
+    ocount = outstanding.count
+    outstanding.each_with_index do |qe,x|
       busies = 0
 
       begin
-        App.logger.info "[q#{qe.id}] processing #{qe.action} " <<
-          "(try #{qe.tries + 1})"
+        App.logger.info "[#{x + 1}/#{ocount}] [q#{qe.id}] processing " <<
+          "#{qe.action} (try #{qe.tries + 1})"
         qe.process!
 
       rescue => e
