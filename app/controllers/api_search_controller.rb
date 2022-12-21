@@ -22,7 +22,7 @@ class APISearchController < ApplicationController
     contacts = Contact.where("address LIKE ? OR actor LIKE ?", q, q).limit(5)
 
     json({
-      "accounts" => contacts.map{|c| c.timeline_object },
+      "accounts" => contacts.map{|c| c.api_object },
       "statuses" => [],
       "hashtags" => [],
     })

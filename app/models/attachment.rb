@@ -83,6 +83,38 @@ class Attachment < DBModel
     }
   end
 
+  def api_object
+    {
+      :id => self.id.to_s,
+      :type => (self.video? ? "video" : "image"),
+      :url => self.media_url,
+      :preview_url => self.media_url,
+      :remote_url => self.source,
+      :meta => {
+        :focus => {
+          :x => 0.0,
+          :y => 0.0,
+        },
+        :original => {
+          :width => self.width.to_i,
+          :height => self.height.to_i,
+          :size => "#{self.width.to_i}x#{self.height.to_i}",
+          :aspect => (self.height.to_i > 0 ? (self.width / self.height.to_f) :
+            1.0),
+        },
+        :small => {
+          :width => self.width.to_i,
+          :height => self.height.to_i,
+          :size => "#{self.width.to_i}x#{self.height.to_i}",
+          :aspect => (self.height.to_i > 0 ? (self.width / self.height.to_f) :
+            1.0),
+        },
+      },
+      :description => self.summary.to_s,
+      :blurhash => "",
+    }
+  end
+
   def html
     if image?
       "<a href=\"#{self.media_url}\">" <<
@@ -155,51 +187,9 @@ class Attachment < DBModel
     self
   end
 
-  def media_object
-    {
-      :id => self.id.to_s,
-      :type => (self.video? ? "video" : "image"),
-      :url => self.media_url,
-      :preview_url => self.media_url,
-      :remote_url => self.source,
-      :meta => {
-        :focus => {
-          :x => 0.0,
-          :y => 0.0,
-        },
-        :original => {
-          :width => self.width.to_i,
-          :height => self.height.to_i,
-          :size => "#{self.width.to_i}x#{self.height.to_i}",
-          :aspect => (self.height.to_i > 0 ? (self.width / self.height.to_f) :
-            1.0),
-        },
-        :small => {
-          :width => self.width.to_i,
-          :height => self.height.to_i,
-          :size => "#{self.width.to_i}x#{self.height.to_i}",
-          :aspect => (self.height.to_i > 0 ? (self.width / self.height.to_f) :
-            1.0),
-        },
-      },
-      :description => self.summary.to_s,
-      :blurhash => "",
-    }
-  end
-
   def media_url
     self.source.present? ? self.source :
       "#{App.attachment_base_url}/attachments/#{id}"
-  end
-
-  def timeline_object
-    {
-      "id" => self.id.to_s,
-      "type" => self.video? ? "video" : "image",
-      "url" => self.url,
-      "preview_url" => self.media_url,
-      "remote_url" => self.source,
-    }
   end
 
   def url

@@ -18,7 +18,7 @@ class APIAccountsController < ApplicationController
   end
 
   get "/verify_credentials" do
-    @api_token.user.contact.timeline_object.to_json
+    @api_token.user.contact.api_object.to_json
   end
 
   get "/:id" do
@@ -26,7 +26,7 @@ class APIAccountsController < ApplicationController
     if !contact
       halt 404, {}
     end
-    contact.timeline_object.to_json
+    json(contact.api_object)
   end
 
   post "/:id/follow" do
@@ -52,7 +52,7 @@ class APIAccountsController < ApplicationController
     end
 
     json(@api_token.user.followers.
-      includes(:contact).map{|f| f.contact.timeline_object })
+      includes(:contact).map{|f| f.contact.api_object })
   end
 
   get "/:id/following" do
@@ -61,7 +61,7 @@ class APIAccountsController < ApplicationController
     end
 
     json(@api_token.user.followings.
-      includes(:contact).map{|f| f.contact.timeline_object })
+      includes(:contact).map{|f| f.contact.api_object })
   end
 
   get "/:id/statuses" do
@@ -79,14 +79,23 @@ class APIAccountsController < ApplicationController
       contact.ingest_recent_notes!
     end
 
+    limit = 20
+    if params[:limit].present? && params[:limit].to_i <= 100
+      limit = params[:limit].to_i
+    end
+
     scope = Note.where(:contact_id => contact.id).includes(:contact).
-      order("created_at DESC").limit(20)
+      order("created_at DESC").limit(limit)
 
     if params[:exclude_replies].to_s == "true"
       scope = scope.where(:for_timeline => true)
     end
 
-    scope.map{|n| n.timeline_object_for(@api_token.user) }.to_json
+    if params[:only_media].to_s == "true"
+      scope = scope.where("id IN (SELECT note_id FROM attachments)")
+    end
+
+    scope.map{|n| n.api_object_for(@api_token.user) }.to_json
   end
 
   post "/:id/unfollow" do

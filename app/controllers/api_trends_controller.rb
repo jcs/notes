@@ -3,12 +3,13 @@ class APITrendsController < ApplicationController
 
   before do
     content_type :json
-    find_api_token
   end
 
   get "/" do
-    find_api_token_user
+    json([])
+  end
 
-    [].to_json
+  get "/statuses" do
+    json([])
   end
 end

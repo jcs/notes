@@ -245,17 +245,65 @@ class Note < DBModel
 
     js = self.activitystream_activity_object(verb)
 
-    to_contacts.each do |c|
-      q = QueueEntry.new
-      q.action = :signed_post
-      q.user_id = self.contact.user.id
-      q.contact_id = c.id
-      q.note_id = self.id
-      q.object = js
-      q.save!
+    self.transaction do
+      to_contacts.each do |c|
+        q = QueueEntry.new
+        q.action = :signed_post
+        q.user_id = self.contact.user.id
+        q.contact_id = c.id
+        q.note_id = self.id
+        q.object = js
+        q.save!
+      end
     end
 
     to_contacts.count
+  end
+
+  def api_object_for(user)
+    ret = {
+      "id" => self.id.to_s,
+      "created_at" => self.created_at.try(:utc).try(:iso8601),
+      "edited_at" => self.note_modified_at.try(:utc).try(:iso8601),
+      "in_reply_to_id" => self.parent_note_id.try(:to_s),
+      "in_reply_to_account_id" => self.parent_note_id.present? ?
+        self.parent_note.contact_id.to_s : nil,
+      "sensitive" => object ? !!object["sensitive"] : false,
+      "spoiler_text" => "",
+      "visibility" => "public",
+      "language" => "en",
+      "url" => self.public_id,
+      "uri" => self.public_id,
+      "replies_count" => self.reply_count,
+      "reblogs_count" => self.forward_count,
+      "favourites_count" => self.like_count,
+      "favourited" => user.likes.where(:note_id => self.id).any?,
+      "reblogged" => user.contact.forwards.where(:note_id => self.id).any?,
+      "muted" => false,
+      "bookmarked" => false,
+      "content" => self.note,
+      "reblog" => nil,
+      "media_attachments" => self.attachments.map(&:api_object),
+      "mentions" => [],
+      "tags" => [],
+      "emojis" => [],
+      "card" => nil,
+      "poll" => nil,
+      "pinned" => false,
+      "account" => self.contact.api_object,
+    }
+
+    if !user.following?(self.contact.actor)
+      forward_contact = self.forwarded_by_follows_of(user).first
+      if forward_contact
+        ret["reblog"] = ret.dup
+        ret["id"] = self.forwards.where(:contact_id => forward_contact.id).
+          first.id.to_s
+        ret["account"] = forward_contact.api_object
+      end
+    end
+
+    ret
   end
 
   def authoritative_url
@@ -339,52 +387,6 @@ class Note < DBModel
       end
     end
     order
-  end
-
-  def timeline_object_for(user)
-    ret = {
-      "id" => self.id.to_s,
-      "created_at" => self.created_at.try(:utc).try(:iso8601),
-      "edited_at" => self.note_modified_at.try(:utc).try(:iso8601),
-      "in_reply_to_id" => self.parent_note_id.try(:to_s),
-      "in_reply_to_account_id" => self.parent_note_id.present? ?
-        self.parent_note.contact_id.to_s : nil,
-      "sensitive" => object ? !!object["sensitive"] : false,
-      "spoiler_text" => "",
-      "visibility" => "public",
-      "language" => "en",
-      "url" => self.public_id,
-      "uri" => self.public_id,
-      "replies_count" => self.reply_count,
-      "reblogs_count" => self.forward_count,
-      "favourites_count" => self.like_count,
-      "favourited" => user.likes.where(:note_id => self.id).any?,
-      "reblogged" => user.contact.forwards.where(:note_id => self.id).any?,
-      "muted" => false,
-      "bookmarked" => false,
-      "content" => self.note,
-      "reblog" => nil,
-      "media_attachments" => self.attachments.map(&:timeline_object),
-      "mentions" => [],
-      "tags" => [],
-      "emojis" => [],
-      "card" => nil,
-      "poll" => nil,
-      "pinned" => false,
-      "account" => self.contact.timeline_object,
-    }
-
-    if !user.following?(self.contact.actor)
-      forward_contact = self.forwarded_by_follows_of(user).first
-      if forward_contact
-        ret["reblog"] = ret.dup
-        ret["id"] = self.forwards.where(:contact_id => forward_contact.id).
-          first.id.to_s
-        ret["account"] = forward_contact.timeline_object
-      end
-    end
-
-    ret
   end
 
   def unforward_by!(contact)

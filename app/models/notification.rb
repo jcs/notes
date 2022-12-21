@@ -30,7 +30,7 @@ class Notification < DBModel
   rescue ActiveRecord::RecordNotUnique
   end
 
-  def timeline_object
+  def api_object
     ret = {
       "id" => self.id.to_s,
       "type" => self.type,
@@ -38,11 +38,11 @@ class Notification < DBModel
     }
 
     if self.contact
-      ret["account"] = self.contact.timeline_object
+      ret["account"] = self.contact.api_object
     end
 
     if self.note
-      ret["status"] = self.note.timeline_object_for(self.user)
+      ret["status"] = self.note.api_object_for(self.user)
     end
 
     ret

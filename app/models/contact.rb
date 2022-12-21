@@ -105,6 +105,32 @@ class Contact < DBModel
     @_actor_uri ||= URI.parse(self.actor)
   end
 
+  def api_object
+    {
+      "id" => self.id.to_s,
+      "username" => self.username,
+      "acct" => self.address,
+      "display_name" => self.realname,
+      "locked" => false,
+      "bot" => false,
+      "note" => self.about,
+      "created_at" => self.created_at.utc.iso8601,
+      "url" => self.url,
+      "avatar" => self.avatar_url,
+      "avatar_static" => self.avatar_url,
+      # metatext requires urls for these even if they aren't present
+      "header" => self.header_url,
+      "header_static" => self.header_url,
+      "followers_count" => self.local? ? self.user.followers.count : 0,
+      "following_count" => self.local? ? self.user.followings.count : 0,
+      "statuses_count" => self.local? ? self.notes.count : 0,
+      "last_status_at" => self.local? ?
+        self.notes.last.try(:created_at).try(:utc).try(:iso8601) : nil,
+      "emojis" => [],
+      "fields" => [],
+    }
+  end
+
   def avatar_url
     "#{App.base_url}/avatars/#{self.id}"
   end
@@ -227,32 +253,6 @@ class Contact < DBModel
       "requested" => false,
       "domain_blocking" => false,
       "endorsed" => false,
-    }
-  end
-
-  def timeline_object
-    {
-      "id" => self.id.to_s,
-      "username" => self.username,
-      "acct" => self.address,
-      "display_name" => self.realname,
-      "locked" => false,
-      "bot" => false,
-      "note" => self.about,
-      "created_at" => self.created_at.utc.iso8601,
-      "url" => self.url,
-      "avatar" => self.avatar_url,
-      "avatar_static" => self.avatar_url,
-      # metatext requires urls for these even if they aren't present
-      "header" => self.header_url,
-      "header_static" => self.header_url,
-      "followers_count" => self.local? ? self.user.followers.count : 0,
-      "following_count" => self.local? ? self.user.followings.count : 0,
-      "statuses_count" => self.local? ? self.notes.count : 0,
-      "last_status_at" => self.local? ?
-        self.notes.last.try(:created_at).try(:utc).try(:iso8601) : nil,
-      "emojis" => [],
-      "fields" => [],
     }
   end
 

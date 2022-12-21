@@ -16,7 +16,7 @@ class APIMediaController < ApplicationController
     a.summary = params[:description]
     a.save!
 
-    json(a.media_object)
+    json(a.api_object)
   end
 
   put "/:id" do
@@ -30,6 +30,6 @@ class APIMediaController < ApplicationController
 
     # TODO: store/update focus
 
-    json(a.media_object)
+    json(a.api_object)
   end
 end

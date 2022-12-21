@@ -48,7 +48,7 @@ class APIStatusesController < ApplicationController
       request.log_extras[:note] = n.id
     end
 
-    json(n.timeline_object_for(@api_token.user))
+    json(n.api_object_for(@api_token.user))
   end
 
   get "/:id" do
@@ -56,7 +56,7 @@ class APIStatusesController < ApplicationController
     if !note
       halt 404, {}
     end
-    note.timeline_object_for(@api_token.user).to_json
+    json(note.api_object_for(@api_token.user))
   end
 
   get "/:id/context" do
@@ -74,9 +74,9 @@ class APIStatusesController < ApplicationController
       end
 
       if n.id < note.id
-        ancs.push n.timeline_object_for(@api_token.user)
+        ancs.push n.api_object_for(@api_token.user)
       else
-        decs.push n.timeline_object_for(@api_token.user)
+        decs.push n.api_object_for(@api_token.user)
       end
     end
 
@@ -93,7 +93,7 @@ class APIStatusesController < ApplicationController
     end
     @api_token.user.activitystream_like_note!(note)
 
-    note.timeline_object_for(@api_token.user).to_json
+    json(note.api_object_for(@api_token.user))
   end
 
   post "/:id/unfavourite" do
@@ -103,6 +103,6 @@ class APIStatusesController < ApplicationController
     end
     @api_token.user.activitystream_dislike_note!(note)
 
-    note.timeline_object_for(@api_token.user).to_json
+    json(note.api_object_for(@api_token.user))
   end
 end

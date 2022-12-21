@@ -10,6 +10,6 @@ class APINotificationsController < ApplicationController
   get "/" do
     ns = @api_token.user.notifications.order("created_at DESC").limit(15)
 
-    json(ns.map{|n| n.timeline_object })
+    json(ns.map{|n| n.api_object })
   end
 end
