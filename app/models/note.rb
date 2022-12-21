@@ -374,12 +374,14 @@ class Note < DBModel
       "account" => self.contact.timeline_object,
     }
 
-    forward_contact = self.forwarded_by_follows_of(user).first
-    if forward_contact
-      ret["reblog"] = ret.dup
-      ret["id"] = self.forwards.where(:contact_id => forward_contact.id).
-        first.id.to_s
-      ret["account"] = forward_contact.timeline_object
+    if !user.following?(self.contact.actor)
+      forward_contact = self.forwarded_by_follows_of(user).first
+      if forward_contact
+        ret["reblog"] = ret.dup
+        ret["id"] = self.forwards.where(:contact_id => forward_contact.id).
+          first.id.to_s
+        ret["account"] = forward_contact.timeline_object
+      end
     end
 
     ret
