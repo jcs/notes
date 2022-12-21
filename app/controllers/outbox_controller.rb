@@ -4,7 +4,8 @@ class OutboxController < ApplicationController
   PER_PAGE = 20
 
   before do
-    @count = @user.notes.timeline.count
+    @scope = @user.notes
+    @count = @scope.count
     @pages = (@count.to_f / PER_PAGE.to_f).ceil
   end
 
@@ -44,7 +45,7 @@ class OutboxController < ApplicationController
       out["next"] = "#{@user.activitystream_url}/outbox/page/#{page + 1}"
     end
 
-    @user.notes.order("id ASC").limit(PER_PAGE).
+    @scope.order("id ASC").limit(PER_PAGE).
     offset((page - 1) * PER_PAGE).each do |note|
       out["orderedItems"].push note.activitystream_object
     end
