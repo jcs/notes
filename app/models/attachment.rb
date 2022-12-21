@@ -77,7 +77,7 @@ class Attachment < DBModel
     {
       "type" => "Document",
       "mediaType" => self.type,
-      "url" => "#{App.base_url}/attachments/#{self.id}",
+      "url" => self.media_url,
       "width" => self.width,
       "height" => self.height,
     }
@@ -85,15 +85,15 @@ class Attachment < DBModel
 
   def html
     if image?
-      "<a href=\"#{self.url}\">" <<
-        "<img src=\"#{self.url}\" loading=\"lazy\" " <<
+      "<a href=\"#{self.media_url}\">" <<
+        "<img src=\"#{self.media_url}\" loading=\"lazy\" " <<
         "intrinsicsize=\"#{self.width}x#{self.height}\"></a>"
     elsif video?
       "<video controls=1 preload=metadata " <<
         "intrinsicsize=\"#{self.width}x#{self.height}\">\n" <<
-        "<source src=\"#{self.url}\" type=\"#{self.type}\" />\n" <<
+        "<source src=\"#{self.media_url}\" type=\"#{self.type}\" />\n" <<
         "Your browser doesn't seem to support HTML video. " <<
-        "You can <a href=\"#{self.url}\">" <<
+        "You can <a href=\"#{self.media_url}\">" <<
         "download the video</a> instead.\n" <<
       "</video>"
     else
@@ -159,10 +159,9 @@ class Attachment < DBModel
     {
       :id => self.id.to_s,
       :type => (self.video? ? "video" : "image"),
-      :url => self.url,
-      :preview_url => self.url,
-      :remote_url => nil,
-      :text_url => self.url,
+      :url => self.media_url,
+      :preview_url => self.media_url,
+      :remote_url => self.source,
       :meta => {
         :focus => {
           :x => 0.0,
@@ -188,12 +187,17 @@ class Attachment < DBModel
     }
   end
 
+  def media_url
+    self.source.present? ? self.source :
+      "#{App.attachment_base_url}/attachments/#{id}"
+  end
+
   def timeline_object
     {
       "id" => self.id.to_s,
       "type" => self.video? ? "video" : "image",
       "url" => self.url,
-      "preview_url" => self.url,
+      "preview_url" => self.media_url,
       "remote_url" => self.source,
     }
   end

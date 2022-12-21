@@ -8,7 +8,7 @@ Dir.glob(Gem.loaded_specs["gd2-ffij"].full_gem_path + "/lib/gd2/*.rb").each do |
 end
 
 class App
-  cattr_accessor :domain, :site_title, :owner
+  cattr_accessor :domain, :site_title, :owner, :attachment_base_url
 end
 
 App.name = "Notes"
@@ -23,6 +23,8 @@ if App.development?
 else
   App.base_url = "https://#{App.domain}#{App.base_path}"
 end
+
+App.attachment_base_url = App.base_url
 
 App.set :sessions, App.sessions.merge({
   :secure => App.production?,
