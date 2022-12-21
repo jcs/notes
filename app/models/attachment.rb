@@ -33,8 +33,8 @@ class Attachment < DBModel
       if !res.ok?
         return nil, "failed querying attachment #{url}: #{res.status}"
       end
-    rescue Timeout::Error
-      return nil, "failed querying attachment #{url}: timed out"
+    rescue Timeout::Error, StandardError => e
+      return nil, "failed querying attachment #{url}: #{e.message}"
     end
 
     a.type = res.headers["Content-Type"]
@@ -45,8 +45,8 @@ class Attachment < DBModel
         if !res.ok? || res.body.to_s == ""
           return nil, "failed fetching attachment #{url}: #{res.status}"
         end
-      rescue Timeout::Error
-        return nil, "failed fetching attachment #{url}: timed out"
+      rescue Timeout::Error, StandardError => e
+        return nil, "failed querying attachment #{url}: #{e.message}"
       end
 
       a.build_blob

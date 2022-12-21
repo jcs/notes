@@ -24,7 +24,8 @@ class InboxController < ApplicationController
     # TODO: remove this once we can verify RsaSignature2017
     if asvm.foreign && !(type == "Create" && object_type == "Note")
       request.log_extras[:error] = "ignoring foreign #{type} message " <<
-        "for #{object_type} forwarded by #{asvm.message["actor"]}"
+        "for #{object_type} forwarded by #{asvm.contact.actor}: " <<
+        asvm.message.inspect
       return [ 201, "got it" ]
     end
 

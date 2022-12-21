@@ -1,4 +1,8 @@
 class Keystore < DBModel
+  def self.q(str)
+    ActiveRecord::Base.connection.quote(str)
+  end
+
   def self.increment(key, amount = 1, expire_extension = 0)
     # atomically increment and select new value and expiration.
     # we could always do 'insert into .. on duplicate key update' but it's

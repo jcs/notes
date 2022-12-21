@@ -63,6 +63,9 @@ class ActivityStream
     end
 
     return res.json, nil
+
+  rescue Timeout::Error, StandardError => e
+    return nil, "failed fetching #{url}: #{e.message}"
   end
 
   def self.get_json_ld(actor)

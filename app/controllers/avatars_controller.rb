@@ -5,7 +5,7 @@ class AvatarsController < ApplicationController
 
   get "/:id" do
     c = Contact.where(:id => params[:id]).first
-    if c && c.avatar
+    if c && c.avatar && c.avatar.blob
       content_type c.avatar.type
       return c.avatar.blob.data
     end
