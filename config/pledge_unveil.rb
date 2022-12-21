@@ -24,6 +24,7 @@ if RUBY_PLATFORM.match(/openbsd/i)
     "#{App.root}/vendor" => "r",
     "/var/www/notes/socket" => "rwc",
     "/usr/local/lib/ruby" => "r",
+    "/tmp" => "rwc",
   })
 
   # exclude exec
