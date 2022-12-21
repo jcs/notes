@@ -17,10 +17,16 @@ class APIMarkersController < ApplicationController
     params[:timeline].each do |w|
       if (m = @api_token.user.marker_for(w))
         ret[w] = m
+      else
+        ret[w] = {
+          "last_read_id" => "0",
+          "version" => 1,
+          "updated_at" => Time.at(0).utc.iso8601,
+        }
       end
     end
 
-    ret.to_json
+    json(ret)
   end
 
   post "/" do
@@ -30,6 +36,6 @@ class APIMarkersController < ApplicationController
       end
     end
 
-    {}.to_json
+    json({})
   end
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_12_09_040857) do
+ActiveRecord::Schema.define(version: 2022_12_21_204303) do
 
   create_table "api_apps", force: :cascade do |t|
     t.string "client_name"
@@ -130,6 +130,15 @@ ActiveRecord::Schema.define(version: 2022_12_09_040857) do
     t.index ["is_public"], name: "index_notes_on_is_public"
     t.index ["parent_note_id"], name: "index_notes_on_parent_note_id"
     t.index ["public_id"], name: "index_notes_on_public_id", unique: true
+  end
+
+  create_table "notifications", force: :cascade do |t|
+    t.datetime "created_at"
+    t.string "type"
+    t.integer "user_id"
+    t.integer "note_id"
+    t.integer "contact_id"
+    t.index ["user_id", "note_id", "contact_id", "type"], name: "unique_notifications", unique: true
   end
 
   create_table "queue_entries", force: :cascade do |t|

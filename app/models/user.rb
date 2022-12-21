@@ -11,6 +11,8 @@ class User < DBModel
     :dependent => :destroy
   has_many :likes,
     :through => :contact
+  has_many :notifications,
+    :dependent => :destroy
 
   has_secure_password
 

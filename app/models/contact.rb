@@ -12,6 +12,8 @@ class Contact < DBModel
     :dependent => :destroy
   has_many :forwards,
     :dependent => :destroy
+  has_many :notifications,
+    :dependent => :destroy
 
   def self.queue_refresh_for_actor!(actor)
     q = QueueEntry.new
