@@ -1,5 +1,5 @@
 class APINotificationsController < ApplicationController
-  self.path = "#{App.base_path}/api/v1/notifications"
+  self.path = "#{App.api_base_path}/api/v1/notifications"
 
   before do
     content_type :json

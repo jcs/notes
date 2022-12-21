@@ -6,9 +6,8 @@ class ApplicationController < App
     # set properly with our routing
     [ "POST", "PUT", "DELETE" ].include?(req.request_method.upcase) && (
       req.env["REQUEST_PATH"] == "#{App.base_path}/inbox" ||
-      req.env["REQUEST_PATH"].starts_with?("#{App.base_path}/api/v1") ||
-      req.env["REQUEST_PATH"].starts_with?("#{App.domain}/oauth") ||
-      req.env["REQUEST_PATH"].starts_with?("#{App.base_path}/oauth")
+      req.env["REQUEST_PATH"].starts_with?("#{App.api_base_path}/api/v1") ||
+      req.env["REQUEST_PATH"].starts_with?("/oauth")
     )
   }
 

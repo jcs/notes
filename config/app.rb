@@ -8,7 +8,8 @@ Dir.glob(Gem.loaded_specs["gd2-ffij"].full_gem_path + "/lib/gd2/*.rb").each do |
 end
 
 class App
-  cattr_accessor :domain, :site_title, :owner, :attachment_base_url
+  cattr_accessor :domain, :site_title, :owner, :attachment_base_url,
+    :api_base_path
 end
 
 App.name = "Notes"

@@ -1,5 +1,5 @@
 class APITimelinesController < ApplicationController
-  self.path = "#{App.base_path}/api/v1/timelines"
+  self.path = "#{App.api_base_path}/api/v1/timelines"
 
   before do
     content_type :json

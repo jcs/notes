@@ -1,5 +1,5 @@
 class APIController < ApplicationController
-  self.path = "#{App.base_path}/api/v1"
+  self.path = "#{App.api_base_path}/api/v1"
 
   before do
     content_type :json

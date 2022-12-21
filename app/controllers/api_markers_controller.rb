@@ -1,5 +1,5 @@
 class APIMarkersController < ApplicationController
-  self.path = "#{App.base_path}/api/v1/markers"
+  self.path = "#{App.api_base_path}/api/v1/markers"
 
   before do
     content_type :json
