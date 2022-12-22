@@ -14,9 +14,16 @@ class ApplicationController < App
   before do
     if request.env["CONTENT_TYPE"].to_s.match(/\Aapplication\/json(\z|;)/)
       request.env["rack.input"].rewind
-      JSON.parse(request.env["rack.input"].read).each do |k,v|
-        request.update_param(k,v)
-        params[k] = v
+      if (js = request.env["rack.input"].read).present?
+        begin
+          JSON.parse(js).each do |k,v|
+            request.update_param(k,v)
+            params[k] = v
+          end
+        rescue JSON::ParserError => e
+          App.logger.error "failed parsing JSON body input: #{e.message}"
+          halt 400, "failed parsing JSON input"
+        end
       end
     end
 
