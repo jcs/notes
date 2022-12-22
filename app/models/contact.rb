@@ -114,7 +114,7 @@ class Contact < DBModel
       "locked" => false,
       "bot" => false,
       "note" => self.about,
-      "created_at" => self.created_at.utc.iso8601,
+      "created_at" => self.created_at.utc.iso8601_with_ms,
       "url" => self.url,
       "avatar" => self.avatar_url,
       "avatar_static" => self.avatar_url,
@@ -125,7 +125,7 @@ class Contact < DBModel
       "following_count" => self.local? ? self.user.followings.count : 0,
       "statuses_count" => self.local? ? self.notes.count : 0,
       "last_status_at" => self.local? ?
-        self.notes.last.try(:created_at).try(:utc).try(:iso8601) : nil,
+        self.notes.last.try(:created_at).try(:utc).try(:iso8601_with_ms) : nil,
       "emojis" => [],
       "fields" => [],
     }

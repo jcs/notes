@@ -34,7 +34,7 @@ class Notification < DBModel
     ret = {
       "id" => self.id.to_s,
       "type" => self.type,
-      "created_at" => self.created_at.utc.iso8601,
+      "created_at" => self.created_at.utc.iso8601_with_ms,
     }
 
     if self.contact

@@ -21,7 +21,7 @@ class APIMarkersController < ApplicationController
         ret[w] = {
           "last_read_id" => "0",
           "version" => 1,
-          "updated_at" => Time.at(0).utc.iso8601,
+          "updated_at" => Time.at(0).utc.iso8601_with_ms,
         }
       end
     end

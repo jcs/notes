@@ -263,11 +263,11 @@ class Note < DBModel
   def api_object_for(user)
     ret = {
       "id" => self.id.to_s,
-      "created_at" => self.created_at.try(:utc).try(:iso8601),
-      "edited_at" => self.note_modified_at.try(:utc).try(:iso8601),
+      "created_at" => self.created_at.try(:utc).try(:iso8601_with_ms),
+      "edited_at" => self.note_modified_at.try(:utc).try(:iso8601_with_ms),
       "in_reply_to_id" => self.parent_note_id.try(:to_s),
-      "in_reply_to_account_id" => self.parent_note_id.present? ?
-        self.parent_note.contact_id.to_s : nil,
+      "in_reply_to_account_id" => self.parent_note_id.present? &&
+        self.parent_note ? self.parent_note.contact_id.to_s : nil,
       "sensitive" => object ? !!object["sensitive"] : false,
       "spoiler_text" => "",
       "visibility" => "public",

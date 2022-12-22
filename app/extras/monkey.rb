@@ -38,3 +38,13 @@ class String
     } * break_sequence
   end
 end
+
+class Time
+  def iso8601_with_ms
+    r = self.iso8601
+    if m = r.match(/\A(\d+-\d+-\d+T\d+:\d+:\d+)(.+)/)
+      return "#{m[1]}.000#{m[2]}"
+    end
+    r
+  end
+end
