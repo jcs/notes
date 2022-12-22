@@ -13,7 +13,7 @@ class Attachment < DBModel
     :video => "video/mp4",
   }
 
-  MAX_SIZE = 300
+  SMALL_SIZE = 500
 
   def self.build_from_upload(params)
     a = Attachment.new
@@ -99,15 +99,13 @@ class Attachment < DBModel
           :width => self.width.to_i,
           :height => self.height.to_i,
           :size => "#{self.width.to_i}x#{self.height.to_i}",
-          :aspect => (self.height.to_i > 0 ? (self.width / self.height.to_f) :
-            1.0),
+          :aspect => self.aspect,
         },
         :small => {
-          :width => self.width.to_i,
-          :height => self.height.to_i,
-          :size => "#{self.width.to_i}x#{self.height.to_i}",
-          :aspect => (self.height.to_i > 0 ? (self.width / self.height.to_f) :
-            1.0),
+          :width => self.small_width.to_i,
+          :height => self.small_height.to_i,
+          :size => "#{self.small_width.to_i}x#{self.small_height.to_i}",
+          :aspect => self.aspect,
         },
       },
       :description => self.summary.to_s,
@@ -115,15 +113,23 @@ class Attachment < DBModel
     }
   end
 
-  def html
+  def aspect
+    (self.height.to_i > 0 ? (self.width.to_i / self.height.to_f) : 1.0)
+  end
+
+  def html(small: false)
+    w = small ? self.small_width : self.width
+    h = small ? self.small_height : self.height
+    mu = small ? self.small_media_url : self.media_url
+
     if image?
-      "<a href=\"#{self.media_url}\">" <<
-        "<img src=\"#{self.media_url}\" loading=\"lazy\" " <<
-        "intrinsicsize=\"#{self.width}x#{self.height}\"></a>"
+      "<a href=\"#{mu}\">" <<
+        "<img src=\"#{mu}\" loading=\"lazy\" intrinsicsize=\"#{w}x#{h}\" " <<
+        (small ? "width=\"#{w}\" height=\"#{h}\"" : "") <<
+        "</a>"
     elsif video?
-      "<video controls=1 preload=metadata " <<
-        "intrinsicsize=\"#{self.width}x#{self.height}\">\n" <<
-        "<source src=\"#{self.media_url}\" type=\"#{self.type}\" />\n" <<
+      "<video controls=1 preload=metadata intrinsicsize=\"#{w}x#{h}\">\n" <<
+        "<source src=\"#{mu}\" type=\"#{self.type}\" />\n" <<
         "Your browser doesn't seem to support HTML video. " <<
         "You can <a href=\"#{self.media_url}\">" <<
         "download the video</a> instead.\n" <<
@@ -190,6 +196,35 @@ class Attachment < DBModel
   def media_url
     self.source.present? ? self.source :
       "#{App.attachment_base_url}/attachments/#{id}"
+  end
+
+  def small_media_url
+    # TODO
+    self.media_url
+  end
+
+  def small_height
+    if self.height.to_i <= SMALL_SIZE
+      return self.height.to_i
+    end
+
+    if self.height.to_i >= self.width.to_i
+      return SMALL_SIZE
+    end
+
+    ((self.small_width / self.width.to_f) * self.height.to_f).floor
+  end
+
+  def small_width
+    if self.width.to_i <= SMALL_SIZE
+      return self.width.to_i
+    end
+
+    if self.width.to_i >= self.height.to_i
+      return SMALL_SIZE
+    end
+
+    ((self.small_height / self.height.to_f) * self.width.to_f).floor
   end
 
   def url
