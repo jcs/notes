@@ -21,19 +21,31 @@
     </div>
   <% end %>
 
-  <a href="<%= note.contact.url %>" target="_blank" rel="nofollow noreferrer">
+  <a href="<%= note.contact.url %>"
+    <% if !note.local? %>
+      target="_blank" rel="nofollow noreferrer"
+    <% end %>
+    >
     <img class="avatar <%= note.contact.user_id ? "local" : "" %>"
       src="<%= App.base_url %>/avatars/<%= h note.contact.id %>"
       width=50 height=50>
   </a>
 
   <span class="realname">
-    <a href="<%= note.contact.url %>" target="_blank" rel="nofollow noreferrer">
+    <a href="<%= note.contact.url %>"
+    <% if !note.local? %>
+      target="_blank" rel="nofollow noreferrer"
+    <% end %>
+    >
       <%= h note.contact.realname_or_username %>
     </a>
   </span>
   <span class="username">
-    <a href="<%= note.contact.url %>" target="_blank" rel="nofollow noreferrer">
+    <a href="<%= note.contact.url %>"
+      <% if !note.local? %>
+        target="_blank" rel="nofollow noreferrer"
+      <% end %>
+      >
       @<%= h note.contact.address %>
     </a>
   </span>
@@ -41,12 +53,15 @@
     -
   </span>
   <span class="date" title="<%= note.created_at.strftime("%Y-%m-%d %H:%M:%S") %>">
-    <a href="<%= h(note.authoritative_url) %>" target="_blank"
-    rel="nofollow noreferrer">
-      <%= short_time_ago(note.created_at) %>
-
+    <a href="<%= h(note.authoritative_url) %>"
+    <% if !note.local? %>
+      target="_blank" rel="nofollow noreferrer"
+    <% end %>
+    >
       <% if note.note_modified_at %>
-        (edited <%= short_time_ago(note.note_modified_at) %>)
+        <%= short_time_ago(note.note_modified_at) %>
+      <% else %>
+        <%= short_time_ago(note.created_at) %>
       <% end %>
     </a>
   </span>
@@ -65,8 +80,11 @@
     <% end %>
 
     <div class="full_date">
-      <a href="<%= note.authoritative_url %>" target="_blank"
-      rel="nofollow noreferrer">
+      <a href="<%= note.authoritative_url %>"
+      <% if !note.local? %>
+        target="_blank" rel="nofollow noreferrer"
+      <% end %>
+      >
         <%= note.created_at.strftime("%H:%M - %B %e, %Y") %>
       </a>
     </div>
