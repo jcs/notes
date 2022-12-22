@@ -1,5 +1,5 @@
-class NotesController < ApplicationController
-  self.path = App.base_path
+class RootController < ApplicationController
+  self.path = :root
 
   PER_PAGE = 20
 
@@ -9,12 +9,16 @@ class NotesController < ApplicationController
     @base_url = @user.activitystream_url
   end
 
-  get "/(.:format)?" do
+  get "#{App.base_path}(.:format)?" do
     if ActivityStream.is_for_request?(request) || params[:format] == "json"
       content_type ActivityStream::ACTIVITY_TYPE
       @user.activitystream_object.to_json
+    elsif params[:format] == "rss"
+      content_type "application/rss+xml"
+      @notes = @user.contact.notes.timeline.limit(PER_PAGE)
+      erb :"rss.xml", :layout => nil
     elsif !params[:format].blank?
-      halt 404
+      halt 404, "format not found"
     else
       @notes = @user.contact.notes.timeline.limit(PER_PAGE)
       likes = Like.where(:note_id => @notes.map{|n| n.id }).group(:note_id).
@@ -33,7 +37,7 @@ class NotesController < ApplicationController
     end
   end
 
-  get "/page/:page" do
+  get "#{App.base_path}/page/:page" do
     @page = params[:page].to_i
     if @page < 1 || @page > @pages
       halt 404
@@ -44,7 +48,7 @@ class NotesController < ApplicationController
     erb :index
   end
 
-  get "/:id" do
+  get "#{App.base_path}/:id" do
     find_note
     if ActivityStream.is_for_request?(request)
       content_type ActivityStream::ACTIVITY_TYPE
@@ -55,17 +59,17 @@ class NotesController < ApplicationController
     end
   end
 
-  get "/:id/likes" do
+  get "#{App.base_path}/:id/likes" do
     find_note
     erb :likes
   end
 
-  get "/:id/forwards" do
+  get "#{App.base_path}/:id/forwards" do
     find_note
     erb :forwards
   end
 
-  get "/:id/replies" do
+  get "#{App.base_path}/:id/replies" do
     find_note
     erb :replies
   end
