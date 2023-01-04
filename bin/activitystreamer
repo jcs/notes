@@ -17,44 +17,49 @@ busies = 0
 
 begin
   while true do
-    outstanding = QueueEntry.where("next_try_at <= ?", Time.now)
-    ocount = outstanding.count
-    outstanding.each_with_index do |qe,x|
-      busies = 0
+    begin
+      outstanding = QueueEntry.where("next_try_at <= ?", Time.now)
+      ocount = outstanding.count
+      outstanding.each_with_index do |qe,x|
+        busies = 0
 
-      begin
-        App.logger.info "[#{x + 1}/#{ocount}] [q#{qe.id}] processing " <<
-          "#{qe.action} (try #{qe.tries + 1})"
-        qe.process!
+        begin
+          App.logger.info "[#{x + 1}/#{ocount}] [q#{qe.id}] processing " <<
+            "#{qe.action} (try #{qe.tries + 1})"
+          qe.process!
 
-      rescue => e
-        App.logger.error "[q#{qe.id}] failed processing: #{e.message}\n" <<
-          e.backtrace.map{|l| "   #{l}" }.join("\n")
+        rescue SQLite3::BusyException => e
+          raise e
 
-        if App.exception_recipients && App.exception_recipients.any?
-          Pony.mail(
-            :to => App.exception_recipients,
-            :subject => "[#{App.name}] activitystreamer #{e.class} " <<
-              "exception (#{e.message[0, 50]})",
-            :body => "#{e.message}\n#{qe.inspect}\n#{e.backtrace.join("\n")}"
-          )
+        rescue => e
+          App.logger.error "[q#{qe.id}] failed processing: #{e.message}\n" <<
+            e.backtrace.map{|l| "   #{l}" }.join("\n")
+
+          if App.exception_recipients && App.exception_recipients.any?
+            Pony.mail(
+              :to => App.exception_recipients,
+              :subject => "[#{App.name}] activitystreamer #{e.class} " <<
+                "exception (#{e.message[0, 50]})",
+              :body => "#{e.message}\n#{qe.inspect}\n#{e.backtrace.join("\n")}"
+            )
+          end
+
+          qe.fail!
+          sleep 5
         end
-
-        qe.fail!
-        sleep 5
       end
+
+      sleep 1
+
+    rescue SQLite3::BusyException
+      busies += 1
+      if busies > 30
+        App.logger.error "database busy for a long time, bailing"
+        exit 1
+      end
+      sleep 1
     end
-
-    sleep 1
   end
-
-rescue SQLite3::BusyException
-  busies += 1
-  if busies > 30
-    App.logger.error "database busy for a long time, bailing"
-    exit 1
-  end
-  sleep 1
 
 rescue => e
   App.logger.error "fatal crash: #{e.message}"
