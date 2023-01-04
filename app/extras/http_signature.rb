@@ -28,7 +28,7 @@ class HTTPSignature
     }
   end
 
-  def self.signature_components_from(request)
+  def self.signature_components_from(request, enforce_time: true)
     sig = request.env["HTTP_SIGNATURE"]
     if sig.to_s == ""
       return nil, "no signature"
@@ -56,7 +56,7 @@ class HTTPSignature
       return nil, "no keyId"
     end
 
-    if comps["algorithm"].to_s != "rsa-sha256"
+    if ![ "rsa-sha256", "hs2019" ].include?(comps["algorithm"].to_s)
       return nil, "unsupported algorithm #{comps["algorithm"].inspect}"
     end
 
@@ -66,7 +66,7 @@ class HTTPSignature
     end
 
     udate = DateTime.parse(date).utc
-    if Time.now - udate > EXPIRATION_WINDOW
+    if enforce_time && Time.now - udate > EXPIRATION_WINDOW
       return nil, "date #{udate} outside expiration window"
     end
 
@@ -108,13 +108,18 @@ class HTTPSignature
   def self.signature_verified?(components, key_pem)
     sig_raw = Base64.strict_decode64(components["signature"])
 
-    rkey = OpenSSL::PKey::RSA.new(key_pem)
-    if !rkey.verify(OpenSSL::Digest.new("SHA256"), sig_raw,
-    components["payload"])
-      return false, "public key verification failed"
+    case components["algorithm"]
+    when "rsa-sha256", "hs2019"
+      rkey = OpenSSL::PKey::RSA.new(key_pem)
+      if !rkey.verify(OpenSSL::Digest.new("SHA256"), sig_raw,
+      components["payload"])
+        return false, "public key verification failed"
+      end
+
+      return true, nil
     end
 
-    return true, nil
+    return false, "unsupported algorithm #{components["algorithm"]}"
 
   rescue => e
     return false, "failed verifying HTTP signature: #{e.message}"
