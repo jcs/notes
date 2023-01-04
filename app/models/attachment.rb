@@ -140,7 +140,7 @@ class Attachment < DBModel
   end
 
   def image?
-    !!self.type.match(/\Aimage\//)
+    self.type.to_s == "" || self.type.to_s.match(/\Aimage\//)
   end
 
   def infer_size!
