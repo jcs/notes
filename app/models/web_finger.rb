@@ -19,7 +19,7 @@ class WebFinger
           url = template
         end
       end
-    rescue StandardError, Timeout::Error => e
+    rescue StandardError, Timeout::Error
     end
 
     if !url

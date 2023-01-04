@@ -29,7 +29,7 @@ class Note < DBModel
     if local? then self.activitystream_publish!("Delete") end
   end
 
-  attr_accessor :like_count, :reply_count, :forward_count
+  attr_writer :like_count, :reply_count, :forward_count
 
   def self.ingest!(asvm)
     if !asvm.is_a?(ActivityStreamVerifiedMessage)

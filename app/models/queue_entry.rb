@@ -50,8 +50,6 @@ class QueueEntry < DBModel
   before_create :assign_first_try
 
   def process!
-    ok = false
-
     if !ACTIONS[self.action.to_sym]
       raise "unknown action #{self.action.inspect}"
     end

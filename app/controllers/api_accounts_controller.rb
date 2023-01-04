@@ -38,7 +38,7 @@ class APIAccountsController < ApplicationController
     f = @api_token.user.followings.where(:contact_id => contact.id).first
     if !f
       ret, err = @api_token.user.activitystream_follow!(contact.actor)
-      if ret == nil
+      if err || ret == nil
         raise 400
       end
     end
@@ -105,6 +105,9 @@ class APIAccountsController < ApplicationController
     end
 
     ret, err = f.unfollow!
+    if err
+      halt 400
+    end
 
     json(f.contact.relationship_object_with(@api_token.user))
   end

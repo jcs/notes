@@ -81,7 +81,7 @@ class App < Sinatra::Base
     @@layouts ||= {}
     cc = cur_controller
 
-    if File.exists?(f = App.root + "/app/views/layouts/#{cc}.erb")
+    if File.exist?(f = App.root + "/app/views/layouts/#{cc}.erb")
       @@layouts[cc] ||= File.read(f)
     else
       @@layouts["application"] ||= File.read(App.root +
@@ -179,12 +179,12 @@ class App < Sinatra::Base
   end
 
   # per-environment configuration
-  if File.exists?(_c = "#{App.root}/config/#{App.environment}.rb")
+  if File.exist?(_c = "#{App.root}/config/#{App.environment}.rb")
     require _c
   end
 
   # per-app initialization, not specific to environment
-  if File.exists?(_c = "#{App.root}/config/app.rb")
+  if File.exist?(_c = "#{App.root}/config/app.rb")
     require _c
   end
 end

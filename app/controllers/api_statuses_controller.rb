@@ -24,7 +24,7 @@ class APIStatusesController < ApplicationController
     mentions.each do |m|
       c = Contact.where(:address => m[:address]).first
       if !c
-        c, err = Contact.refresh_for_actor_with_timeout(m[:address])
+        c, _ = Contact.refresh_for_actor_with_timeout(m[:address])
       end
 
       if c

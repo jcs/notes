@@ -87,7 +87,7 @@ class User < DBModel
     if old
       version = old["version"] + 1
     end
-    ks = Keystore.put("user:#{self.id}:marker:#{what}",
+    Keystore.put("user:#{self.id}:marker:#{what}",
       {
         "last_read_id" => value,
         "version" => version,

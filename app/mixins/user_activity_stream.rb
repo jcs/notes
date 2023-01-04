@@ -99,7 +99,7 @@ module UserActivityStream
       following.contact_id = contact.id
       following.follow_object = msg
       following.save!
-    rescue ActiveRecord::RecordNotUnique => e
+    rescue ActiveRecord::RecordNotUnique
     end
 
     return true, nil
@@ -132,7 +132,7 @@ module UserActivityStream
       follower.save!
 
       App.logger.info "#{self.username} gained follower #{contact.actor}"
-    rescue ActiveRecord::RecordNotUnique => e
+    rescue ActiveRecord::RecordNotUnique
     end
 
     return true, nil

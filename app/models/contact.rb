@@ -96,7 +96,7 @@ class Contact < DBModel
 
   def activitystream_get_json_ld
     if !@_asld
-      @_asld, err = ActivityStream.get_json_ld(self.actor)
+      @_asld, _ = ActivityStream.get_json_ld(self.actor)
     end
     @_asld
   end
@@ -203,7 +203,7 @@ class Contact < DBModel
   end
 
   def linkified_about(opts = {})
-    html, mentions = HTMLSanitizer.linkify_with_mentions(about, opts)
+    html, _ = HTMLSanitizer.linkify_with_mentions(about, opts)
     html
   end
 

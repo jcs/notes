@@ -3,7 +3,7 @@ require_relative "spec_helper.rb"
 describe UniqueId do
   it "gives an id" do
     t = Time.now
-    sleep 0.6
+    sleep 1
 
     oseq = UniqueId.sequence
 
@@ -11,7 +11,7 @@ describe UniqueId do
     uid = UniqueId.get
     assert uid
 
-    sleep 0.6
+    sleep 1
     t2 = Time.now
 
     uobj = UniqueId.new(uid)
