@@ -7,9 +7,7 @@ development:
 
 test:
   adapter: sqlite3
-  database: db/test.sqlite3
-  pool: 5
-  timeout: 5000
+  database: ":memory:"
 
 # in db/production so that directory can be owned by the uid:gid running the
 # app in the production environment
