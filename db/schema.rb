@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2022_12_21_204303) do
+ActiveRecord::Schema.define(version: 2023_01_05_050019) do
 
   create_table "api_apps", force: :cascade do |t|
     t.string "client_name"
@@ -73,6 +73,11 @@ ActiveRecord::Schema.define(version: 2022_12_21_204303) do
     t.index ["user_id"], name: "index_contacts_on_user_id", unique: true
   end
 
+  create_table "conversations", force: :cascade do |t|
+    t.string "public_id"
+    t.index ["public_id"], name: "index_conversations_on_public_id"
+  end
+
   create_table "followers", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -116,15 +121,15 @@ ActiveRecord::Schema.define(version: 2022_12_21_204303) do
     t.string "note"
     t.integer "parent_note_id"
     t.text "import_id"
-    t.string "conversation"
     t.json "object"
     t.datetime "note_modified_at"
     t.string "public_id"
     t.boolean "is_public", default: false
     t.json "mentioned_contact_ids"
     t.boolean "for_timeline", default: false
+    t.integer "conversation_id"
     t.index ["contact_id"], name: "index_notes_on_contact_id"
-    t.index ["conversation"], name: "index_notes_on_conversation"
+    t.index ["conversation_id"], name: "index_notes_on_conversation_id"
     t.index ["for_timeline"], name: "index_notes_on_for_timeline"
     t.index ["import_id"], name: "index_notes_on_import_id", unique: true
     t.index ["is_public"], name: "index_notes_on_is_public"

@@ -13,6 +13,7 @@ class Note < DBModel
   has_many :replies,
     :class_name => "Note",
     :foreign_key => "parent_note_id"
+  belongs_to :conversation
 
   validates_presence_of :contact
 
@@ -20,7 +21,7 @@ class Note < DBModel
     where(:for_timeline => true).order("created_at DESC")
   }
 
-  before_create :assign_conversation, :assign_ids
+  before_create :assign_ids
 
   after_create do
     if local? then self.activitystream_publish!("Create") end
@@ -48,7 +49,6 @@ class Note < DBModel
       dbnote.public_id = note["id"]
     end
     dbnote.object = note
-    dbnote.conversation = note["conversation"]
     dbnote.note = note["content"]
 
     dbnote.created_at = DateTime.parse(note["published"])
@@ -84,6 +84,10 @@ class Note < DBModel
     if note["inReplyTo"].present? &&
     (parent = Note.where(:public_id => note["inReplyTo"]).first)
       dbnote.parent_note_id = parent.id
+      dbnote.conversation_id = parent.conversation_id
+    elsif note["conversation"].present?
+      c = dbnote.build_conversation
+      c.public_id = note["conversation"]
     end
 
     dbnote.mentioned_contact_ids = []
@@ -198,7 +202,7 @@ class Note < DBModel
       "updated" => self.note_modified_at.try(:utc).try(:iso8601),
       "to" => to,
       "cc" => cc,
-      "context" => self.conversation,
+      "context" => self.conversation.try(:public_id),
       "inReplyTo" => self.parent_note.try(:public_id),
       "attributedTo" => self.user.activitystream_actor,
       "content" => self.note,
@@ -369,7 +373,7 @@ class Note < DBModel
   end
 
   def thread
-    tns = Note.where(:conversation => self.conversation).order(:created_at).to_a
+    tns = self.conversation.notes.order(:created_at).to_a
     order = tns.extract!{|n| n.parent_note_id.to_i == 0 } || []
     while tns.any?
       tn = tns.shift
@@ -408,16 +412,6 @@ class Note < DBModel
   end
 
 private
-  def assign_conversation
-    if self.conversation.blank? && self.local?
-      if self.parent_note
-        self.conversation = self.parent_note.conversation
-      else
-        self.conversation = "#{App.base_url}/threads/#{UniqueId.get}"
-      end
-    end
-  end
-
   def assign_ids
     if self.local?
       if self.id.blank?

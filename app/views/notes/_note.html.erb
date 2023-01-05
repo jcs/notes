@@ -93,7 +93,7 @@
     <div class="note_vanity">
       <% if dedicated %>
         <% if note.reply_count > 0 %>
-          <a href="<%= App.base_url %>/<%= note.id %>/replies">
+          <a href="<%= App.base_url %>/<%= note.id %>">
             <strong><%= note.reply_count %></strong>
             Repl<%= note.reply_count == 1 ? "y" : "ies" %>
             &nbsp;
@@ -115,7 +115,7 @@
         <% end %>
       <% else %>
         <div class="note_vanity_replies">
-          <a href="<%= App.base_url %>/<%= note.id %>/replies"
+          <a href="<%= App.base_url %>/<%= note.id %>"
             title="<%= note.reply_count %> Repl<%=
             note.reply_count == 1 ? "y" : "ies" %>">
             <svg viewBox="0 0 560 560" xmlns="http://www.w3.org/2000/svg">

@@ -12,7 +12,16 @@ class APIStatusesController < ApplicationController
     n.contact_id = @api_token.user.contact.id
     if params[:in_reply_to_id].present?
       n.parent_note_id = params[:in_reply_to_id]
+      if n.parent_note
+        n.conversation_id = n.parent_note.conversation_id
+      end
     end
+
+    if !n.conversation
+      c = n.build_conversation
+      c.is_local = true
+    end
+
     n.is_public = (params[:visibility] == "public")
 
     html, mentions = HTMLSanitizer.linkify_with_mentions(params[:status])
@@ -67,8 +76,7 @@ class APIStatusesController < ApplicationController
 
     ancs = []
     decs = []
-    Note.where(:conversation => note.conversation).order("created_at ASC").
-    each do |n|
+    note.conversation.notes.order("created_at ASC").each do |n|
       if n.id == note.id
         next
       end
@@ -81,8 +89,8 @@ class APIStatusesController < ApplicationController
     end
 
     {
-      "ancestors" => ancs,
-      "descendants" => decs,
+      "ancestors" => ancs.uniq,
+      "descendants" => decs.uniq,
     }.to_json
   end
 
