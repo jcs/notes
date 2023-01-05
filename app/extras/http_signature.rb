@@ -5,11 +5,14 @@ class HTTPSignature
     digest = "SHA-256=" + Base64.strict_encode64(
       OpenSSL::Digest::SHA256.new(content).digest)
 
-    date = Time.now.utc.httpdate
-    data = "(request-target): #{method.to_s.downcase} #{uri.path}\n" +
-      "host: #{uri.host}\n" +
-      "date: #{date}\n" +
-      "digest: #{digest}"
+    date = Time.now.utc
+    hdate = date.httpdate
+    data = [
+      "(request-target): #{method.to_s.downcase} #{uri.path}",
+      "host: #{uri.host}",
+      "date: #{hdate}",
+      "digest: #{digest}",
+    ].join("\n")
 
     rkey = OpenSSL::PKey::RSA.new(private_key)
     signature = Base64.strict_encode64(rkey.sign(
@@ -23,7 +26,7 @@ class HTTPSignature
 
     return {
       "Signature" => header,
-      "Date" => date,
+      "Date" => hdate,
       "Digest" => digest,
     }
   end
