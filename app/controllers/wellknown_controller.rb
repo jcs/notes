@@ -5,7 +5,8 @@ class WellknownController < ApplicationController
     content_type "application/xml"
     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
       "<XRD xmlns=\"http://docs.oasis-open.org/ns/xri/xrd-1.0\">" +
-      "<Link rel=\"lrdd\" template=\"#{App.domain}/.well-known/webfinger?" +
+      "<Link rel=\"lrdd\" " +
+        "template=\"https://#{App.domain}/.well-known/webfinger?" +
         "resource={uri}\"/>" +
       "</XRD>"
   end
