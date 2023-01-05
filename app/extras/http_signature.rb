@@ -67,16 +67,20 @@ class HTTPSignature
     if date.to_s == ""
       return nil, "no date header"
     end
+    date = DateTime.parse(date).utc
 
-    udate = DateTime.parse(date).utc
-    if enforce_time && Time.now - udate > EXPIRATION_WINDOW
-      return nil, "date #{udate} outside expiration window"
-    end
+    expires = (Time.now + EXPIRATION_WINDOW).utc
 
     payload = comps["headers"].split(" ").map{|h|
       v = nil
       if h == "(request-target)"
         v = "#{request.env["REQUEST_METHOD"].downcase} #{request.path}"
+      elsif h == "(created)"
+        v = comps["created"]
+        date = Time.at(v.to_i).utc
+      elsif h == "(expires)"
+        v = comps["expires"]
+        expires = Time.at(v.to_i).utc
       elsif h == "content-type"
         v = request.env["CONTENT_TYPE"]
       elsif h == "content-length"
@@ -91,6 +95,14 @@ class HTTPSignature
 
       "#{h}: #{v}"
     }.join("\n")
+
+    if enforce_time && Time.now.utc - date > EXPIRATION_WINDOW
+      return nil, "date #{date} older than expiration window"
+    end
+
+    if enforce_time && Time.now.utc > expires
+      return nil, "expiration #{expires} already passed"
+    end
 
     if payload == ""
       return nil, "no headers to sign"
