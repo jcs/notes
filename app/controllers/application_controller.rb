@@ -30,6 +30,10 @@ class ApplicationController < App
     @user = User.includes(:contact).first!
   end
 
+  not_found do
+    erb "<h1>ENOENT</h1>"
+  end
+
 private
   def json(data)
     content_type :json
