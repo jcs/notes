@@ -19,6 +19,10 @@ class ActivityStream
       signer = ActivityStream.request_signer
     end
 
+    if headers["Content-Type"].to_s == ""
+      headers["Content-Type"] = PROFILE_TYPE
+    end
+
     hs = HTTPSignature.sign_headers(uri, method, body.to_s,
       signer.contact.key_id, signer.private_key)
 
