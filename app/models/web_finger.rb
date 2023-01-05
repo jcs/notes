@@ -26,7 +26,7 @@ class WebFinger
       url = "https://#{parts[:domain]}/.well-known/webfinger?resource={uri}"
     end
 
-    url.gsub!("{uri}", CGI.escape("#{parts[:username]}@#{parts[:domain]}"))
+    url.gsub!("{uri}", CGI.escape("acct:#{parts[:username]}@#{parts[:domain]}"))
     return url, nil
   end
 
